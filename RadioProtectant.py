@@ -1,6 +1,6 @@
 """ Class defining the radioprotectant compounds"""
 import numpy as np
-
+import math
 
 class Compound(object):
     """ Class containing fields and methods that can be applied to the
@@ -128,34 +128,44 @@ CMPD_DICT in the Compound class."""
                 print """Rerun the get_run_numbers method with a Concentration
 concentration that was used in the experiment: 1, 2, 5 or 10 mM."""
 
-    def get_average_buffer(self, avg_type="median"):
+    def get_average_buffer(self, avg_type="mean"):
         """Get the average value of the buffer frames for a particular
         concentration of the radioprotectant.
         """
         # Get the run numbers corresponding to the buffer
         buffer_nums = self.get_run_numbers(buffer_runs=True)
 
-        # Preallocate the matrix that will contain the averaged buffer runs
+        # Preallocate the matrix that will contain the averaged intensities
+        # and variances buffer runs
         averaged_buffer_runs = np.zeros([len(buffer_nums),
                                         self.NUM_POINTS_PER_FRAME])
+        averaged_var_buffer_runs = np.zeros([len(buffer_nums),
+                                            self.NUM_POINTS_PER_FRAME])
 
         # Go through each of the runs corresponding to the buffer and average
-        # all of the frames that were collected during that run. Then store
-        # the result of the averaged frames in the relevant column of the
-        # preallocated array and return that array at the end.
+        # all of the frames that were collected during that run (both the
+        # average intensity and the corresponding averaged standard deviation).
+        # Then store the result of the averaged frames in the relevant row
+        # of the preallocated arrays and return those arrays at the end.
         for i, buffer_run in enumerate(buffer_nums):
             dat_file_prefix = self.get_1d_curve_filename_prefix(buffer_run)
             buffer_frames = np.zeros([self.NUM_FRAMES,
                                       self.NUM_POINTS_PER_FRAME])
+            buffer_var_frames = np.zeros([self.NUM_FRAMES,
+                                         self.NUM_POINTS_PER_FRAME])
             for frame in range(self.NUM_FRAMES):
                 dat_file = '{prefix}_{frame_num:05d}.dat'.format(prefix=dat_file_prefix, frame_num=frame+1)
                 frame_data = np.loadtxt(dat_file)
                 buffer_frames[frame, :] = frame_data[:, 1]
+                buffer_var_frames[frame, :] = frame_data[:, 2]
             if avg_type == "median":
                 averaged_buffer_runs[i, :] = np.median(buffer_frames, axis=0)
             elif avg_type == "mean":
                 averaged_buffer_runs[i, :] = np.mean(buffer_frames, axis=0)
-        return averaged_buffer_runs
+            sum_var = np.sum(np.square(buffer_var_frames), axis=0)
+            scale = 1.0 / math.pow(self.NUM_FRAMES, 2)
+            averaged_var_buffer_runs[i, :] = scale * sum_var
+        return averaged_buffer_runs, averaged_var_buffer_runs
 
     def get_doses(self):
         """Run RADDOSE-3D to get doses for the Radioprotectant compound
