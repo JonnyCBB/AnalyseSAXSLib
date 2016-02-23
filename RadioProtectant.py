@@ -1,6 +1,8 @@
 """ Class defining the radioprotectant compounds"""
 import numpy as np
 import math
+import os
+
 
 class Compound(object):
     """ Class containing fields and methods that can be applied to the
@@ -12,9 +14,11 @@ class Compound(object):
     NUM_FRAMES = 120  # Number of frames taken in SAXS experiment
     NUM_POINTS_PER_FRAME = 1043  # Number of points in 1D intensity curve frame
 
-    COMPOUND_CONC = [10, 5, 2, 1]  # In mM or v/v% if liquid.
+    CMPD_CONC = [10, 5, 2, 1]  # In mM or v/v% if liquid.
 
-    DATA_LOC_PREFIX = "../20151214"  # Location of SAXS data
+    DATA_LOC_PREFIX = "../20151214"  # Location of original SAXS data
+
+    SUBTRACTED_DATA_LOC = "../subtracted"  # Location of subtracted SAXS curves
 
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
 
@@ -70,12 +74,14 @@ class Compound(object):
 #                         CONSTRUCTOR METHOD                              #
 # ----------------------------------------------------------------------- #
     def __init__(self, compound_name, buffer_subtraction=True,
-                 average_type="median"):
+                 average_type="mean"):
         lowercase_cmpd_name = compound_name.lower()  # convert to lower case
         if lowercase_cmpd_name in self.CMPD_DICT:  # Check cmp is in dictionary
             self.name = self.CMPD_DICT[lowercase_cmpd_name]  # Extract name
             if buffer_subtraction:  # If user wants to subtract the buffer
-                self.average_buffer = self.get_average_buffer(average_type)
+                average_buffer = self.get_average_runs(buffer_runs=True,
+                                                       avg_type=average_type)
+                self.subtract_average_buffer(average_buffer)
             self.doses = self.get_doses()
 
         else:
@@ -88,10 +94,16 @@ CMPD_DICT in the Compound class."""
 #                         INSTANCE METHODS                                #
 # ----------------------------------------------------------------------- #
 
-    def get_1d_curve_filename_prefix(self, run_number):
+    def get_1d_curve_filename_prefix(self, run_number, new_data_loc_prfx=""):
         """Return the filename prefix for a SAXS run
         """
-        return "{}/{}_{}/{}/{}_{}_{run_num:03d}".format(self.DATA_LOC_PREFIX,
+        # If a file prefix location is not given then use the location where
+        # original data is stored. Otherwise use the user defined location.
+        if not new_data_loc_prfx:
+            data_loc_prfx = self.DATA_LOC_PREFIX
+        else:
+            data_loc_prfx = new_data_loc_prfx
+        return "{}/{}_{}/{}/{}_{}_{run_num:03d}".format(data_loc_prfx,
                                                         self.PROTEIN_SAMPLE,
                                                         self.name,
                                                         "1d",
@@ -99,13 +111,13 @@ CMPD_DICT in the Compound class."""
                                                         self.CMPD_INFO[self.name][self.LIST_INDEX["dat_file_prefix"]],
                                                         run_num=run_number)
 
-    def get_run_numbers(self, buffer_runs, concentration=0.0):
+    def get_run_numbers(self, buffers=False, concentration=0.0):
         """Return the numbers of the filename prefixes that correspond to the
         runs for a given concentration
         """
         # Get number of the initial run in the relevant compound directory.
         initial_run_number = self.CMPD_INFO[self.name][self.LIST_INDEX["run_number_range"]][0]
-        if buffer_runs:
+        if buffers:
             # If user wants the runs corresponding the the buffer then return
             # those.
             buffer1 = initial_run_number
@@ -116,8 +128,8 @@ CMPD_DICT in the Compound class."""
         else:
             # If user wants the runs corresponding to a specific concentration
             # of the compound then return these runs.
-            if concentration in self.COMPOUND_CONC:
-                conc_index = self.COMPOUND_CONC.index(concentration)
+            if concentration in self.CMPD_CONC:
+                conc_index = self.CMPD_CONC.index(concentration)
                 run1 = (conc_index * 4) + initial_run_number + 1
                 run2 = (conc_index * 4) + initial_run_number + 2
                 run3 = (conc_index * 4) + initial_run_number + 3
@@ -125,47 +137,103 @@ CMPD_DICT in the Compound class."""
             else:
                 print '*********************** ERROR ************************'
                 print 'Concentration not given!'
-                print """Rerun the get_run_numbers method with a Concentration
-concentration that was used in the experiment: 1, 2, 5 or 10 mM."""
+                print """Rerun the get_run_numbers method with a concentration
+that was used in the experiment: 1, 2, 5 or 10 mM."""
 
-    def get_average_buffer(self, avg_type="mean"):
-        """Get the average value of the buffer frames for a particular
-        concentration of the radioprotectant.
+    def get_average_runs(self, cmpd_concentration=0.0, buffer_runs=False,
+                         avg_type="mean"):
+        """Get the average value of the intensity of frames for a particular
+        concentration (buffer or protein sample) of the radioprotectant.
         """
-        # Get the run numbers corresponding to the buffer
-        buffer_nums = self.get_run_numbers(buffer_runs=True)
+        # Get the run numbers corresponding to the required run
+        run_nums = self.get_run_numbers(buffers=buffer_runs,
+                                        concentration=cmpd_concentration)
 
         # Preallocate the matrix that will contain the averaged intensities
-        # and variances buffer runs
-        averaged_buffer_runs = np.zeros([len(buffer_nums),
-                                        self.NUM_POINTS_PER_FRAME])
-        averaged_var_buffer_runs = np.zeros([len(buffer_nums),
-                                            self.NUM_POINTS_PER_FRAME])
-
-        # Go through each of the runs corresponding to the buffer and average
-        # all of the frames that were collected during that run (both the
-        # average intensity and the corresponding averaged standard deviation).
-        # Then store the result of the averaged frames in the relevant row
-        # of the preallocated arrays and return those arrays at the end.
-        for i, buffer_run in enumerate(buffer_nums):
-            dat_file_prefix = self.get_1d_curve_filename_prefix(buffer_run)
-            buffer_frames = np.zeros([self.NUM_FRAMES,
+        # and variances of the runs
+        averaged_runs = np.zeros([len(run_nums),
+                                  self.NUM_POINTS_PER_FRAME])
+        averaged_sig_runs = np.zeros([len(run_nums),
                                       self.NUM_POINTS_PER_FRAME])
-            buffer_var_frames = np.zeros([self.NUM_FRAMES,
-                                         self.NUM_POINTS_PER_FRAME])
+
+        # Go through each of the runs corresponding to the buffer/concentration
+        # and average all of the frames that were collected during that run
+        # (both the average intensity and the corresponding averaged standard
+        # deviation). Then store the result of the averaged frames in the
+        # relevant row of the preallocated arrays and return those arrays at
+        # the end.
+        for i, run_num in enumerate(run_nums):
+            frames = np.zeros([self.NUM_FRAMES,
+                               self.NUM_POINTS_PER_FRAME])
+            sig_frames = np.zeros([self.NUM_FRAMES,
+                                   self.NUM_POINTS_PER_FRAME])
+            dat_file_prefix = self.get_1d_curve_filename_prefix(run_num)
             for frame in range(self.NUM_FRAMES):
-                dat_file = '{prefix}_{frame_num:05d}.dat'.format(prefix=dat_file_prefix, frame_num=frame+1)
-                frame_data = np.loadtxt(dat_file)
-                buffer_frames[frame, :] = frame_data[:, 1]
-                buffer_var_frames[frame, :] = frame_data[:, 2]
+                frame_data = np.loadtxt(get_1d_curve_filename(dat_file_prefix,
+                                                              frame+1))
+                frames[frame, :] = frame_data[:, 1]
+                sig_frames[frame, :] = frame_data[:, 2]
             if avg_type == "median":
-                averaged_buffer_runs[i, :] = np.median(buffer_frames, axis=0)
+                averaged_runs[i, :] = np.median(frames, axis=0)
             elif avg_type == "mean":
-                averaged_buffer_runs[i, :] = np.mean(buffer_frames, axis=0)
-            sum_var = np.sum(np.square(buffer_var_frames), axis=0)
-            scale = 1.0 / math.pow(self.NUM_FRAMES, 2)
-            averaged_var_buffer_runs[i, :] = scale * sum_var
-        return averaged_buffer_runs, averaged_var_buffer_runs
+                averaged_runs[i, :] = np.mean(frames, axis=0)
+            averaged_sig_runs[i, :] = ((1.0 / math.pow(self.NUM_FRAMES, 2)) *
+                                       np.sum(np.square(sig_frames), axis=0))
+        return averaged_runs, averaged_sig_runs
+
+    def subtract_average_buffer(self, avg_buffer):
+        """Substract the average buffer from all of the frames for all
+        concentrations. The result is a new folder containing all of the
+        subtracted data.
+        """
+        self.make_data_dirs(self.SUBTRACTED_DATA_LOC)
+
+        # For each frame for each of the different concentrations, subtract the
+        # averaged buffer values from the intensity curves and write them to
+        # file in a directory structure that mimics that of the structure where
+        # the original data are stored.
+        for i, conc in enumerate(self.CMPD_CONC):
+            run_nums = self.get_run_numbers(concentration=conc, buffers=False)
+            for run_num in run_nums:
+                dat_file_prefix = self.get_1d_curve_filename_prefix(run_num)
+                for frame in range(self.NUM_FRAMES):
+                    dat_file = get_1d_curve_filename(dat_file_prefix,
+                                                     frame+1)
+                    avg_buff = np.column_stack((avg_buffer[0][i, :],
+                                                avg_buffer[1][i, :]))
+                    subtracted_frame = subtract_frame_from_file(dat_file,
+                                                                avg_buff)
+
+                    # Now the frames have been subtracted, write the file.
+                    sub_file_prfx = self.get_1d_curve_filename_prefix(run_num,
+                                                                      self.SUBTRACTED_DATA_LOC)
+                    sub_filename = get_1d_curve_filename(sub_file_prfx,
+                                                         frame+1)
+                    header = """Sample description: {}
+Parent(s): {}
+Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
+                    np.savetxt(fname=sub_filename, X=subtracted_frame,
+                               header=header, delimiter="\t", fmt="%.6e")
+
+    def make_data_dirs(self, top_level_dir):
+        """Make directory structure identical to the one created for the
+        original data. This is so the methods written to find the correct 1d
+        scattering curve data can be used without modification on the newly
+        created data.
+        """
+        if not os.path.exists(top_level_dir):
+            os.makedirs(top_level_dir)
+        if not os.path.exists("{}/{}_{}".format(top_level_dir,
+                                                self.PROTEIN_SAMPLE,
+                                                self.name)):
+            os.makedirs("{}/{}_{}".format(top_level_dir, self.PROTEIN_SAMPLE,
+                                          self.name))
+        if not os.path.exists("{}/{}_{}/{}".format(top_level_dir,
+                                                   self.PROTEIN_SAMPLE,
+                                                   self.name, "1d")):
+            os.makedirs("{}/{}_{}/{}".format(top_level_dir,
+                                             self.PROTEIN_SAMPLE, self.name,
+                                             "1d"))
 
     def get_doses(self):
         """Run RADDOSE-3D to get doses for the Radioprotectant compound
@@ -173,4 +241,34 @@ concentration that was used in the experiment: 1, 2, 5 or 10 mM."""
         ###################################################################
         # NEED TO SORT THIS METHOD OUT
         ###################################################################
-        return np.ones(self.NUM_FRAMES)
+        pass
+
+# ----------------------------------------------------------------------- #
+#                               FUNCTIONS                                 #
+# ----------------------------------------------------------------------- #
+
+
+def get_1d_curve_filename(curve_prefix, frame_num):
+    """Return the filename for a 1d scattering curve
+    """
+    return '{prfx}_{fr:05d}.dat'.format(prfx=curve_prefix, fr=frame_num)
+
+
+def subtract_frame_from_file(frame1_file, frame2):
+    """Subtract frame2 to from frame1_file where frame1_file is the
+    filename where the data for frame1 is stored.
+    """
+    frame_data = np.loadtxt(frame1_file)
+    return subtract_frames(frame_data, frame2)
+
+
+def subtract_frames(frame1, frame2):
+    """Method used to subtract data extracted from curves of two 1D
+    scattering frames. frame1 - frame2
+    """
+    if frame2.shape[1] == 3:
+        frame2 = frame2[:, 1:]
+    sub_intensities = frame1[:, 1] - frame2[:, 0]
+    updated_variances = np.square(frame1[:, 2]) + np.square(frame2[:, 1])
+    updated_sigmas = np.sqrt(updated_variances)
+    return np.column_stack((frame1[:, 0], sub_intensities, updated_sigmas))
