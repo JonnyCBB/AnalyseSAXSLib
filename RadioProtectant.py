@@ -136,7 +136,8 @@ concentration that was used in the experiment: 1, 2, 5 or 10 mM."""
         buffer_nums = self.get_run_numbers(buffer_runs=True)
 
         # Preallocate the matrix that will contain the averaged buffer runs
-        averaged_buffer_runs = np.zeros([len(buffer_nums), self.NUM_POINTS_PER_FRAME])
+        averaged_buffer_runs = np.zeros([len(buffer_nums),
+                                        self.NUM_POINTS_PER_FRAME])
 
         # Go through each of the runs corresponding to the buffer and average
         # all of the frames that were collected during that run. Then store
@@ -144,7 +145,8 @@ concentration that was used in the experiment: 1, 2, 5 or 10 mM."""
         # preallocated array and return that array at the end.
         for i, buffer_run in enumerate(buffer_nums):
             dat_file_prefix = self.get_1d_curve_filename_prefix(buffer_run)
-            buffer_frames = np.zeros([self.NUM_FRAMES, self.NUM_POINTS_PER_FRAME])
+            buffer_frames = np.zeros([self.NUM_FRAMES,
+                                      self.NUM_POINTS_PER_FRAME])
             for frame in range(self.NUM_FRAMES):
                 dat_file = '{prefix}_{frame_num:05d}.dat'.format(prefix=dat_file_prefix, frame_num=frame+1)
                 frame_data = np.loadtxt(dat_file)
