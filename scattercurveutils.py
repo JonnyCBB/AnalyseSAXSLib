@@ -18,10 +18,10 @@ def plot_1d_curve_with_filename(filename, start_point=1, end_point=-1,
     if log_intensity:
         intensity = np.log(intensity)
     plt.plot(reciprocal_resolution, intensity, 'o')
-    plt.xlabel(r'1/q ($\AA$)', fontdict=font)
+    plt.xlabel(r'Scattering Vector, q ($\AA^{-1}$)', fontdict=font)
     if log_intensity:
         plt.ylabel('log(I) (arb. units.)', fontdict=font)
     else:
         plt.ylabel('Intensity (arb. units.)', fontdict=font)
-    plt.title('1D Scatter Plot', fontdict=font)
+    plt.title('1D Scattering Curve', fontdict=font)
     plt.show()
