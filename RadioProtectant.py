@@ -2,6 +2,7 @@
 import numpy as np
 import math
 import os
+from RunSystemCommand import run_system_command
 
 
 class Compound(object):
@@ -18,7 +19,9 @@ class Compound(object):
 
     DATA_LOC_PREFIX = "../20151214"  # Location of original SAXS data
 
-    SUBTRACTED_DATA_LOC = "../subtracted"  # Location of subtracted SAXS curves
+    SUB_DATA_LOC = "../subtracted"  # Location of subtracted SAXS curves
+
+    CROPPED_DATA_LOC = "../cropped"  # Location of cropped data
 
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
 
@@ -74,14 +77,31 @@ class Compound(object):
 #                         CONSTRUCTOR METHOD                              #
 # ----------------------------------------------------------------------- #
     def __init__(self, compound_name, buffer_subtraction=True,
-                 average_type="mean"):
+                 average_type="mean", crop_start=1, crop_end=-1,
+                 overwrite=True):
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         lowercase_cmpd_name = compound_name.lower()  # convert to lower case
         if lowercase_cmpd_name in self.CMPD_DICT:  # Check cmp is in dictionary
             self.name = self.CMPD_DICT[lowercase_cmpd_name]  # Extract name
-            if buffer_subtraction:  # If user wants to subtract the buffer
+
+            # Subtract the buffer if the user specifies
+            if buffer_subtraction:
                 average_buffer = self.get_average_runs(buffer_runs=True,
                                                        avg_type=average_type)
-                self.subtract_average_buffer(average_buffer)
+                self.subtract_average_buffer(average_buffer, overwrite)
+                data_loc = self.SUB_DATA_LOC
+            else:
+                data_loc = self.DATA_LOC_PREFIX
+
+            # Crop the data
+            self.crop_data(data_loc, crop_start, crop_end, overwrite)
+
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+            #                 CORRELATION ANALYSIS OF FRAMES                  #
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             self.doses = self.get_doses()
 
         else:
@@ -181,39 +201,70 @@ that was used in the experiment: 1, 2, 5 or 10 mM."""
                                        np.sum(np.square(sig_frames), axis=0))
         return averaged_runs, averaged_sig_runs
 
-    def subtract_average_buffer(self, avg_buffer):
+    def subtract_average_buffer(self, avg_buffer, overwrite_data):
         """Substract the average buffer from all of the frames for all
         concentrations. The result is a new folder containing all of the
         subtracted data.
         """
-        self.make_data_dirs(self.SUBTRACTED_DATA_LOC)
+        top_level_already_existed = self.make_data_dirs(self.SUB_DATA_LOC)
 
-        # For each frame for each of the different concentrations, subtract the
-        # averaged buffer values from the intensity curves and write them to
-        # file in a directory structure that mimics that of the structure where
-        # the original data are stored.
-        for i, conc in enumerate(self.CMPD_CONC):
-            run_nums = self.get_run_numbers(concentration=conc, buffers=False)
-            for run_num in run_nums:
-                dat_file_prefix = self.get_1d_curve_filename_prefix(run_num)
-                for frame in range(self.NUM_FRAMES):
-                    dat_file = get_1d_curve_filename(dat_file_prefix,
-                                                     frame+1)
-                    avg_buff = np.column_stack((avg_buffer[0][i, :],
-                                                avg_buffer[1][i, :]))
-                    subtracted_frame = subtract_frame_from_file(dat_file,
-                                                                avg_buff)
-
-                    # Now the frames have been subtracted, write the file.
-                    sub_file_prfx = self.get_1d_curve_filename_prefix(run_num,
-                                                                      self.SUBTRACTED_DATA_LOC)
-                    sub_filename = get_1d_curve_filename(sub_file_prfx,
+        if not top_level_already_existed or overwrite_data:
+            # For each frame for each of the different concentrations, subtract
+            # the averaged buffer values from the intensity curves and write
+            # them to file in a directory structure that mimics that of the
+            # structure where the original data are stored.
+            for i, conc in enumerate(self.CMPD_CONC):
+                run_nums = self.get_run_numbers(concentration=conc,
+                                                buffers=False)
+                for run_num in run_nums:
+                    dat_file_prfx = self.get_1d_curve_filename_prefix(run_num)
+                    for frame in range(self.NUM_FRAMES):
+                        dat_file = get_1d_curve_filename(dat_file_prfx,
                                                          frame+1)
-                    header = """Sample description: {}
+                        avg_buff = np.column_stack((avg_buffer[0][i, :],
+                                                    avg_buffer[1][i, :]))
+                        subtracted_frame = subtract_frame_from_file(dat_file,
+                                                                    avg_buff)
+
+                        # Now the frames have been subtracted, write the file.
+                        sub_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
+                        header = """Sample description: {}
 Parent(s): {}
 Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
-                    np.savetxt(fname=sub_filename, X=subtracted_frame,
-                               header=header, delimiter="\t", fmt="%.6e")
+                        np.savetxt(fname=sub_filename, X=subtracted_frame,
+                                   header=header, delimiter="\t", fmt="%.6e")
+        else:
+            print """'subtraction' directory already existed and it was
+specified not to overwrite the data. If you want to create the data then set
+the overwrite to 'True'."""
+
+    def crop_data(self, data_location, crp_start, crp_end, overwrite_data):
+        """Crop the 1d scattering curves
+        """
+        # If the crp_end value is below or equal to zero then set it to the max
+        # value of the number of points per frame.
+        if crp_end <= 0:
+            crp_end = self.NUM_POINTS_PER_FRAME
+
+        # Make directory tree for the cropped data.
+        top_level_already_existed = self.make_data_dirs(self.CROPPED_DATA_LOC)
+
+        if not top_level_already_existed or overwrite_data:
+            # For each frame for each of the different concentrations, crop the
+            # frame to the specified level
+            for i, conc in enumerate(self.CMPD_CONC):
+                run_nums = self.get_run_numbers(concentration=conc,
+                                                buffers=False)
+                for run_num in run_nums:
+                    for frame in range(self.NUM_FRAMES):
+                        # Get location of subtracted and cropped files
+                        sub_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
+                        crp_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.CROPPED_DATA_LOC),
+                                                             frame+1)
+
+                        # create the command string to be run
+                        cmd = "datcrop {} --first {:d} --last {:d} -o {}".format(sub_filename, crp_start, crp_end, crp_filename)
+                        run_system_command(command_string=cmd)
 
     def make_data_dirs(self, top_level_dir):
         """Make directory structure identical to the one created for the
@@ -221,8 +272,11 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
         scattering curve data can be used without modification on the newly
         created data.
         """
+        top_level_dir_already_exists = False
         if not os.path.exists(top_level_dir):
             os.makedirs(top_level_dir)
+        else:
+            top_level_dir_already_exists = True
         if not os.path.exists("{}/{}_{}".format(top_level_dir,
                                                 self.PROTEIN_SAMPLE,
                                                 self.name)):
@@ -234,6 +288,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
             os.makedirs("{}/{}_{}/{}".format(top_level_dir,
                                              self.PROTEIN_SAMPLE, self.name,
                                              "1d"))
+        return top_level_dir_already_exists
 
     def get_doses(self):
         """Run RADDOSE-3D to get doses for the Radioprotectant compound
