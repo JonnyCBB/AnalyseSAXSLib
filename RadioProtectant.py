@@ -2,7 +2,6 @@
 import numpy as np
 import math
 import os
-from RunSystemCommand import run_system_command
 
 
 class Compound(object):
@@ -97,7 +96,8 @@ class Compound(object):
                 data_loc = self.DATA_LOC_PREFIX
 
             # Crop the data
-            self.crop_data(data_loc, crop_start, crop_end, overwrite)
+            self.crop_data(data_loc, crop_start, crop_end, overwrite,
+                           buffer_subtraction)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -238,7 +238,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
 specified not to overwrite the data. If you want to create the data then set
 the overwrite to 'True'."""
 
-    def crop_data(self, data_location, crp_start, crp_end, overwrite_data):
+    def crop_data(self, data_location, crp_start, crp_end, overwrite_data,
+                  buff_sub):
         """Crop the 1d scattering curves
         """
         # If the crp_end value is below or equal to zero then set it to the max
@@ -258,13 +259,28 @@ the overwrite to 'True'."""
                 for run_num in run_nums:
                     for frame in range(self.NUM_FRAMES):
                         # Get location of subtracted and cropped files
-                        sub_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
-                        crp_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.CROPPED_DATA_LOC),
-                                                             frame+1)
+                        if buff_sub:
+                            parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
+                        else:
+                            parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.DATA_LOC_PREFIX), frame+1)
 
-                        # create the command string to be run
-                        cmd = "datcrop {} --first {:d} --last {:d} -o {}".format(sub_filename, crp_start, crp_end, crp_filename)
-                        run_system_command(command_string=cmd)
+                        crp_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.CROPPED_DATA_LOC), frame+1)
+
+                        # Crop data
+                        frame_data = np.loadtxt(parent_filename)
+                        cropped_frame_data = frame_data[crp_start-1:crp_end, :]
+                        header = """Sample description: {}
+Parent(s): {}
+Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
+                                        parent_filename, conc)
+                        np.savetxt(fname=crp_filename,
+                                   X=cropped_frame_data,
+                                   header=header, delimiter="\t",
+                                   fmt="%.6e")
+
+                        # # create the command string to be run
+                        # cmd = "datcrop {} --first {:d} --last {:d} -o {}".format(sub_filename, crp_start, crp_end, crp_filename)
+                        # run_system_command(command_string=cmd)
 
     def make_data_dirs(self, top_level_dir):
         """Make directory structure identical to the one created for the
