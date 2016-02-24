@@ -197,8 +197,8 @@ that was used in the experiment: 1, 2, 5 or 10 mM."""
                 averaged_runs[i, :] = np.median(frames, axis=0)
             elif avg_type == "mean":
                 averaged_runs[i, :] = np.mean(frames, axis=0)
-            averaged_sig_runs[i, :] = ((1.0 / math.pow(self.NUM_FRAMES, 2)) *
-                                       np.sum(np.square(sig_frames), axis=0))
+            averaged_sig_runs[i, :] = np.sqrt((1.0 / math.pow(self.NUM_FRAMES, 2)) *
+                                              np.sum(np.square(sig_frames), axis=0))
         return averaged_runs, averaged_sig_runs
 
     def subtract_average_buffer(self, avg_buffer, overwrite_data):
