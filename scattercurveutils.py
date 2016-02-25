@@ -18,7 +18,7 @@ def plot_1d_curve_with_filename(filename, start_point=1, end_point=-1,
     if log_intensity:
         intensity = np.log(intensity)
     plt.plot(reciprocal_resolution, intensity, 'o')
-    plt.xlabel(r'Scattering Vector, q ($\AA^{-1}$)', fontdict=font)
+    plt.xlabel(r'Scattering Vector, q ($nm^{-1}$)', fontdict=font)
     if log_intensity:
         plt.ylabel('log(I) (arb. units.)', fontdict=font)
     else:
