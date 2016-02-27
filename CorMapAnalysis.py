@@ -58,6 +58,44 @@ class ScatterAnalysis(object):
                                                                float(data[5])]
         return data_dict
 
+    def find_diff_frames(self, frame=1, P_threshold=0.01):
+        """List all statistically different frames according to the method by
+        Daniel Franke, Cy M Jeffries & Dmitri I Svergun (2015)
+        """
+        if frame <= self.I.shape[1]:
+            diff_frames = []
+            for i in xrange(0, self.I.shape[1]):
+                if i+1 < frame:
+                    key = "{},{}".format(i+1, frame)
+                elif i+1 > frame:
+                    key = "{},{}".format(frame, i+1)
+                else:
+                    continue
+                adjP = self.datcmp_data[key][2]
+                if adjP < P_threshold:
+                    diff_frames.append(i+1)
+            return diff_frames
+        else:
+            print "********************** ERROR ***************************"
+            print "FRAME '{}' DOES NOT EXIST".format(frame)
+            print "Use different frame numbers between 1 and {}".format(self.I.shape[1])
+
+
+    def first_diff_frame(self, frame=1, P_threshold=0.01):
+        """Return the first frame that is statistically different from the
+        chosen frame.
+        """
+        list_of_diff_frames = self.find_diff_frames(frame, P_threshold)
+        return list_of_diff_frames[0]
+
+    def similar_frames(self, frame=1, P_threshold=0.01):
+        """Return list all of the frames that are similar as defined by the
+        method presented in Daniel Franke, Cy M Jeffries & Dmitri I Svergun
+        (2015).
+        """
+        list_of_diff_frames = self.find_diff_frames(frame, P_threshold)
+        return [i+1 for i in xrange(0, self.I.shape[1]) if i+1 not in list_of_diff_frames]
+
     def get_pw_data(self, frame1, frame2, datcmp_data_type="adj P(>C)"):
         """Return C, P(>C) or Bonferroni adjusted P(>C) value from the
         DATCMP output.
