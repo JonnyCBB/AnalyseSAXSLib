@@ -58,15 +58,90 @@ class ScatterAnalysis(object):
                                                                float(data[5])]
         return data_dict
 
+    def get_pw_data(self, frame1, frame2, datcmp_data_type="adj P(>C)"):
+        """Return C, P(>C) or Bonferroni adjusted P(>C) value from the
+        DATCMP output.
+
+        frame1: integer number of the 1st frame used for the pairwise analyis
+
+        frame1: integer number of the 2nd frame used for the pairwise analyis
+
+        datcmp_data_type: string specifying the pairwise result to be returned.
+        The input options are:
+        1) 'C' - This will return the C value i.e. the max observed patch of
+        continuous runs of -1 or 1
+        2) 'P(>C)' - This will return the P value of observing a patch of
+        continuous runs of -1 or 1 bigger than the corresponding C value.
+        3) 'adj P(>C)' - This will return the Bonferroni adjusted P value of
+        observing a patch of continuous runs of -1 or 1 bigger than the
+        corresponding C value.
+        """
+        if datcmp_data_type == "C" or datcmp_data_type == 0:
+            dat_type = 0
+        elif datcmp_data_type == "P(>C)":
+            dat_type = 1
+        elif datcmp_data_type == "adj P(>C)":
+            dat_type = 2
+        else:
+            print "********************** ERROR ***************************"
+            print "INVALID DATCMP DATA TYPE CHOSEN: '{}' DOES NOT EXIST".format(datcmp_data_type)
+            print "Please choose either 'C', 'P(>C)' or 'adj P(>C)'."
+
+        datcmp_key = "{},{}".format(frame1, frame2)
+        if datcmp_key in self.datcmp_data:
+            return self.datcmp_data[datcmp_key][dat_type]
+        else:
+            print "********************** ERROR ***************************"
+            print "KEY '{}' DOES NOT EXIST".format(datcmp_key)
+            print "Use different frame numbers between 1 and {}".format(self.I.shape[1])
+
     def calc_cormap(self):
         """Return CorMap matrix i.e. the (Pearson product-moment) correlation
         matrix.
         """
         return np.corrcoef(self.I)
 
+    def calc_pwcormap(self, frame1, frame2):
+        """Return the pairwise correlation matrix between frame 1 and frame 2
+        """
+        pw_I = np.column_stack([self.I[:, frame1-1], self.I[:, frame2-1]])
+        return np.corrcoef(pw_I)
+
+    def get_pw_data_array(self, frame=0, delete_zero_row=True):
+        """Return an array of all C, P(>C) or Bonferroni adjusted P(>C) values
+        from the DATCMP output for the requested frame.
+        """
+        if frame == 0:
+            pw_data = np.zeros([len(self.datcmp_data), 3])
+            for i, values in enumerate(self.datcmp_data.itervalues()):
+                pw_data[i, :] = np.asarray(values)
+        elif 1 <= frame <= self.I.shape[1]:
+            pw_data = np.zeros([self.I.shape[1], 3])
+            for i in xrange(0, self.I.shape[1]):
+                if i+1 < frame:
+                    key = "{},{}".format(i+1, frame)
+                elif i+1 > frame:
+                    key = "{},{}".format(frame, i+1)
+                else:
+                    continue
+                pw_data[i, :] = np.asarray(self.datcmp_data[key])
+        else:
+            print "********************** ERROR ***************************"
+            print "FRAME '{}' DOES NOT EXIST".format(frame)
+            print "Use a frame number between 1 and {}".format(self.I.shape[1])
+
+        if delete_zero_row and frame > 0:
+            return np.delete(pw_data, (frame-1), axis=0)
+        else:
+            return pw_data
+
+
+# ----------------------------------------------------------------------- #
+#                        PLOT THE CORRELATION MAP                         #
+# ----------------------------------------------------------------------- #
     def plot_cormap(self, colour_scheme="gray", display=True, save=False,
                     filename="", directory=""):
-        """Create a plot object of a CorMap
+        """Create a CorMap (correlation map) plot
         """
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                          SET PLOT PARAMS                        #
@@ -86,6 +161,222 @@ class ScatterAnalysis(object):
         plt.ylabel(r'Scattering Vector, q (nm$^{-1}$)',
                    fontdict=self.PLOT_LABEL)
         plt.colorbar(cormap)
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
+
+# ----------------------------------------------------------------------- #
+#                    PLOT THE PAIRWISE CORRELATION MAP                    #
+# ----------------------------------------------------------------------- #
+    def plot_pwcormap(self, fr1, fr2, colour_scheme="gray", display=True,
+                      save=False, filename="", directory=""):
+        """Create a pairwise CorMap plot.
+        """
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SET PLOT PARAMS                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        min_q = min(self.q)
+        max_q = max(self.q)
+        self.PLOT_NUM += 1
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                     PLOT PAIRWISE CORMAP                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        plt.figure(self.PLOT_NUM)
+        cormap = plt.imshow(self.calc_pwcormap(frame1=fr1, frame2=fr2),
+                            cmap=colour_scheme,
+                            extent=[min_q, max_q, min_q, max_q])
+        plt.xlabel(r'Scattering Vector, q (nm$^{-1}$)',
+                   fontdict=self.PLOT_LABEL)
+        plt.ylabel(r'Scattering Vector, q (nm$^{-1}$)',
+                   fontdict=self.PLOT_LABEL)
+        plt.colorbar(cormap)
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
+
+    # ----------------------------------------------------------------------- #
+    #                  PLOT THE HISTOGRAM OF PAIRWISE DATA                    #
+    # ----------------------------------------------------------------------- #
+    def plot_histogram(self, frame=0, datcmp_data_type="C",
+                       display=True, save=False, filename="",
+                       directory=""):
+        """Plot histogram of pairwise correlation data
+        """
+        if datcmp_data_type == "C" or datcmp_data_type == 0:
+            dat_type = 0
+        elif datcmp_data_type == "P(>C)":
+            dat_type = 1
+        elif datcmp_data_type == "adj P(>C)":
+            dat_type = 2
+        else:
+            print "********************** ERROR ***************************"
+            print "INVALID DATCMP DATA TYPE CHOSEN: '{}' DOES NOT EXIST".format(datcmp_data_type)
+            print "Please choose either 'C', 'P(>C)' or 'adj P(>C)'."
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SET PLOT PARAMS                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        self.PLOT_NUM += 1
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          PLOT HISTOGRAM                         #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        plt.figure(self.PLOT_NUM)
+        plt.hist(self.get_pw_data_array(frame)[:, dat_type])
+        plt.xlabel("{}".format(datcmp_data_type), fontdict=self.PLOT_LABEL)
+        plt.ylabel(r'Frequency', fontdict=self.PLOT_LABEL)
+        if frame == 0:
+            plt.title("{} values for all pairwise comparisons".format(datcmp_data_type))
+        else:
+            plt.title("{} values for all pairwise comparisons with frame {}".format(datcmp_data_type, frame))
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
+
+    # ----------------------------------------------------------------------- #
+    #                    SCATTER PLOT OF PAIRWISE DATA                        #
+    # ----------------------------------------------------------------------- #
+    def scatter_plot(self, frame=1, P_threshold=0.01, markersize=60,
+                     display=True, save=False, filename="", directory="",
+                     legend_loc="upper left"):
+        """Scatter plot of the C values for a chosen frame against all other
+        frames.
+        """
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SET PLOT PARAMS                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        self.PLOT_NUM += 1
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SCATTER PLOT                           #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        pwframe_data = self.get_pw_data_array(frame=frame,
+                                              delete_zero_row=False)
+        pwframe_data = np.column_stack([np.linspace(1, pwframe_data.shape[0],
+                                                    pwframe_data.shape[0]), pwframe_data])
+        pwframe_data = np.delete(pwframe_data, (frame-1), axis=0)
+
+        colours = ["#0072B2", "#009E73", "#D55E00"]
+        lb_dict = {0: [colours[0], "adj P(>C) == 1"],
+                   1: [colours[1], "1 >= adj P(>C) >= {}".format(P_threshold)],
+                   2: [colours[2], "adj P(>C) < {}".format(P_threshold)]}
+
+        plt.figure(self.PLOT_NUM)
+        good_points = pwframe_data[pwframe_data[:, 3] == 1]
+        plt.scatter(good_points[:, 0], good_points[:, 1], color=lb_dict[0][0],
+                    s=markersize, edgecolors='#ffffff', alpha=1,
+                    label=lb_dict[0][1])
+
+        ok_points = pwframe_data[1 > pwframe_data[:, 3]]
+        ok_points = ok_points[ok_points[:, 3] >= P_threshold]
+        plt.scatter(ok_points[:, 0], ok_points[:, 1], color=lb_dict[1][0],
+                    s=markersize, edgecolors='#ffffff', alpha=1,
+                    label=lb_dict[1][1])
+
+        bad_points = pwframe_data[pwframe_data[:, 3] < P_threshold]
+        plt.scatter(bad_points[:, 0], bad_points[:, 1], color=lb_dict[2][0],
+                    s=markersize, edgecolors='#ffffff', alpha=1,
+                    label=lb_dict[2][1])
+
+        plt.legend(loc=legend_loc, scatterpoints=1)
+        plt.xlabel("Frame number", fontdict=self.PLOT_LABEL)
+        plt.ylabel(r'C', fontdict=self.PLOT_LABEL)
+        plt.title("C values against frame number for frame {}".format(frame))
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
+
+    # ----------------------------------------------------------------------- #
+    #                        PLOT 1D SCATTERING CURVE                         #
+    # ----------------------------------------------------------------------- #
+    def plot_1d_intensity(self, frames, start_point=1, end_point=-1,
+                          log_intensity=False, display=True, save=False,
+                          filename="", directory="", legend_loc="upper right"):
+        """Plot 1d scatter curves
+        """
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SET PLOT PARAMS                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        self.PLOT_NUM += 1
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                        PLOT SCATTER CURVE                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if end_point == -1:
+            end_point = len(self.q)
+        reciprocal_resolution = self.q[start_point-1:end_point]
+        frames = [i - 1 for i in frames]
+        intensity = self.I[start_point-1:end_point, frames]
+        if log_intensity:
+            intensity = np.log(intensity)
+        plt.figure(self.PLOT_NUM)
+        for i in xrange(0, intensity.shape[1]):
+            plt.plot(reciprocal_resolution, intensity[:, i], 'o',
+                     label="Frame {}".format(frames[i] + 1))
+        plt.xlabel(r'Scattering Vector, q ($nm^{-1}$)',
+                   fontdict=self.PLOT_LABEL)
+        if log_intensity:
+            plt.ylabel('log(I) (arb. units.)', fontdict=self.PLOT_LABEL)
+        else:
+            plt.ylabel('Intensity (arb. units.)', fontdict=self.PLOT_LABEL)
+        plt.title('1D Scattering Curve', fontdict=self.PLOT_LABEL)
+        plt.legend(loc=legend_loc, scatterpoints=1)
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
