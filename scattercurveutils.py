@@ -14,7 +14,7 @@ def plot_1d_curve_with_filename(filename, start_point=1, end_point=-1,
             'size': 16}
     scatter_curve_data = np.loadtxt(filename)
     reciprocal_resolution = scatter_curve_data[start_point-1:end_point, 0]
-    intensity = np.log(scatter_curve_data[start_point-1:end_point, 1])
+    intensity = scatter_curve_data[start_point-1:end_point, 1]
     if log_intensity:
         intensity = np.log(intensity)
     plt.plot(reciprocal_resolution, intensity, 'o')
