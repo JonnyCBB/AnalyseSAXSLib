@@ -29,6 +29,7 @@ class Compound(object):
     # compound in the data files.
     CMPD_DICT = {"none": "no_protection",
                  "n/a": "no_protection",
+                 "np": "no_protection",
                  "ascorbate": "Asc",
                  "sodium ascorbate": "Asc",
                  "naac": "Asc",
@@ -140,15 +141,20 @@ CMPD_DICT in the Compound class."""
         if buffers:
             # If user wants the runs corresponding the the buffer then return
             # those.
-            buffer1 = initial_run_number
-            buffer2 = initial_run_number + 4
-            buffer3 = initial_run_number + 8
-            buffer4 = initial_run_number + 12
-            return [buffer1, buffer2, buffer3, buffer4]
+            if self.name == "no_protection":
+                return [29, 33, 35]
+            else:
+                buffer1 = initial_run_number
+                buffer2 = initial_run_number + 4
+                buffer3 = initial_run_number + 8
+                buffer4 = initial_run_number + 12
+                return [buffer1, buffer2, buffer3, buffer4]
         else:
             # If user wants the runs corresponding to a specific concentration
             # of the compound then return these runs.
-            if concentration in self.CMPD_CONC:
+            if self.name == "no_protection":
+                return [30, 31, 32]
+            elif concentration in self.CMPD_CONC:
                 conc_index = self.CMPD_CONC.index(concentration)
                 run1 = (conc_index * 4) + initial_run_number + 1
                 run2 = (conc_index * 4) + initial_run_number + 2
@@ -216,23 +222,35 @@ that was used in the experiment: 1, 2, 5 or 10 mM."""
             for i, conc in enumerate(self.CMPD_CONC):
                 run_nums = self.get_run_numbers(concentration=conc,
                                                 buffers=False)
-                for run_num in run_nums:
-                    dat_file_prfx = self.get_1d_curve_filename_prefix(run_num)
-                    for frame in range(self.NUM_FRAMES):
-                        dat_file = get_1d_curve_filename(dat_file_prfx,
-                                                         frame+1)
-                        avg_buff = np.column_stack((avg_buffer[0][i, :],
-                                                    avg_buffer[1][i, :]))
-                        subtracted_frame = subtract_frame_from_file(dat_file,
-                                                                    avg_buff)
+                # Only need to loop through once for the "no_protection" sample
+                # Because there aren't several concentrations of radio
+                # protectant compounds in the sample.
+                if i == 1 and self.name == "no_protection":
+                    break
+                else:
+                    for run_num in run_nums:
+                        dat_file_prfx = self.get_1d_curve_filename_prefix(run_num)
+                        for frame in range(self.NUM_FRAMES):
+                            dat_file = get_1d_curve_filename(dat_file_prfx,
+                                                             frame+1)
+                            avg_buff = np.column_stack((avg_buffer[0][i, :],
+                                                        avg_buffer[1][i, :]))
+                            subtracted_frame = subtract_frame_from_file(dat_file,
+                                                                        avg_buff)
 
-                        # Now the frames have been subtracted, write the file.
-                        sub_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
-                        header = """Sample description: {}
+                            # Now the frames have been subtracted, write the file.
+                            sub_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
+                            if self.name == "no_protection":
+                                header = """Sample description: {}
+Parent(s): {}
+No protection""".format(self.PROTEIN_SAMPLE, dat_file)
+                            else:
+                                header = """Sample description: {}
 Parent(s): {}
 Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE, dat_file, conc)
-                        np.savetxt(fname=sub_filename, X=subtracted_frame,
-                                   header=header, delimiter="\t", fmt="%.6e")
+                            np.savetxt(fname=sub_filename, X=subtracted_frame,
+                                       header=header, delimiter="\t",
+                                       fmt="%.6e")
         else:
             print """'subtraction' directory already existed and it was
 specified not to overwrite the data. If you want to create the data then set
@@ -256,27 +274,38 @@ the overwrite to 'True'."""
             for i, conc in enumerate(self.CMPD_CONC):
                 run_nums = self.get_run_numbers(concentration=conc,
                                                 buffers=False)
-                for run_num in run_nums:
-                    for frame in range(self.NUM_FRAMES):
-                        # Get location of subtracted and cropped files
-                        if buff_sub:
-                            parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
-                        else:
-                            parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.DATA_LOC_PREFIX), frame+1)
+                # Only need to loop through once for the "no_protection" sample
+                # Because there aren't several concentrations of radio
+                # protectant compounds in the sample.
+                if i == 1 and self.name == "no_protection":
+                    break
+                else:
+                    for run_num in run_nums:
+                        for frame in range(self.NUM_FRAMES):
+                            # Get location of subtracted and cropped files
+                            if buff_sub:
+                                parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.SUB_DATA_LOC), frame+1)
+                            else:
+                                parent_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.DATA_LOC_PREFIX), frame+1)
 
-                        crp_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.CROPPED_DATA_LOC), frame+1)
+                            crp_filename = get_1d_curve_filename(self.get_1d_curve_filename_prefix(run_num, self.CROPPED_DATA_LOC), frame+1)
 
-                        # Crop data
-                        frame_data = np.loadtxt(parent_filename)
-                        cropped_frame_data = frame_data[crp_start-1:crp_end, :]
-                        header = """Sample description: {}
+                            # Crop data
+                            frame_data = np.loadtxt(parent_filename)
+                            cropped_frame_data = frame_data[crp_start-1:crp_end, :]
+                            if self.name == "no_protection":
+                                header = """Sample description: {}
+Parent(s): {}
+No protection""".format(self.PROTEIN_SAMPLE, parent_filename)
+                            else:
+                                header = """Sample description: {}
 Parent(s): {}
 Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                         parent_filename, conc)
-                        np.savetxt(fname=crp_filename,
-                                   X=cropped_frame_data,
-                                   header=header, delimiter="\t",
-                                   fmt="%.6e")
+                            np.savetxt(fname=crp_filename,
+                                       X=cropped_frame_data,
+                                       header=header, delimiter="\t",
+                                       fmt="%.6e")
 
                         # # create the command string to be run
                         # cmd = "datcrop {} --first {:d} --last {:d} -o {}".format(sub_filename, crp_start, crp_end, crp_filename)
