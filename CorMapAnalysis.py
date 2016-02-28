@@ -26,14 +26,38 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     #                         CONSTRUCTOR METHOD                              #
     # ----------------------------------------------------------------------- #
-    def __init__(self, scat_curve_location):
+    def __init__(self, scat_curve_location, x_axis_vec=[], x_metric="",
+                 x_units=""):
+        # Go through files and extract the frame data.
         file_list = glob.glob(scat_curve_location)
+        num_frames = len(file_list)
         self.q = np.loadtxt(file_list[0])[:, 0]
-        self.I = np.zeros([len(self.q), len(file_list)])
+        self.I = np.zeros([len(self.q), num_frames])
         for i, file in enumerate(file_list):
             frame_data = np.loadtxt(file)
             self.I[:, i] = frame_data[:, 1]
+
+        # Run DATCMP to get pairwise comparison information.
         self.datcmp_data = self.get_datcmp_info(scat_curve_location)
+
+        # Organise the x-axis used for the plots. Default will be the frame
+        # number.
+        if x_axis_vec:
+            if len(x_axis_vec) == num_frames:
+                self.x_axis = x_axis_vec
+            else:
+                print "x_axis_vec is not the same length as the number of"
+                print "frames. Using frame numbers instead."
+                self.x_axis_vec = np.linspace(1, num_frames, num_frames)
+        else:
+            self.x_axis = np.linspace(1, num_frames, num_frames)
+
+        if x_metric and x_units:
+            self.x_metric = x_metric
+            self.x_units = x_units
+        else:
+            self.x_metric = "Frame number"
+            self.x_units = ""
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -79,7 +103,6 @@ class ScatterAnalysis(object):
             print "********************** ERROR ***************************"
             print "FRAME '{}' DOES NOT EXIST".format(frame)
             print "Use different frame numbers between 1 and {}".format(self.I.shape[1])
-
 
     def first_diff_frame(self, frame=1, P_threshold=0.01):
         """Return the first frame that is statistically different from the
