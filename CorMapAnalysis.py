@@ -42,7 +42,7 @@ class ScatterAnalysis(object):
 
         # Organise the x-axis used for the plots. Default will be the frame
         # number.
-        if x_axis_vec:
+        if not isinstance(x_axis_vec, list):
             if len(x_axis_vec) == num_frames:
                 self.x_axis = x_axis_vec
             else:
@@ -453,11 +453,25 @@ class ScatterAnalysis(object):
         plt.figure(self.PLOT_NUM)
         if len(intensity.shape) == 2:
             for i in xrange(0, intensity.shape[1]):
-                plt.plot(reciprocal_resolution, intensity[:, i], 'o',
-                         label="Frame {}".format(frames[i] + 1))
+                if self.x_units:
+                    plt.plot(reciprocal_resolution, intensity[:, i], 'o',
+                             label="Frame {}, {}={} {}".format(frames[i] + 1,
+                                                               self.x_metric,
+                                                               self.x_axis[frames[i]],
+                                                               self.x_units))
+                else:
+                    plt.plot(reciprocal_resolution, intensity[:, i], 'o',
+                             label="Frame {}".format(frames[i] + 1))
         else:
-            plt.plot(reciprocal_resolution, intensity, 'o',
-                     label="Frame {}".format(frames))
+            if self.x_units:
+                plt.plot(reciprocal_resolution, intensity, 'o',
+                         label="Frame {}, {}={} {}".format(frames,
+                                                           self.x_metric,
+                                                           self.x_axis[frames-1],
+                                                           self.x_units))
+            else:
+                plt.plot(reciprocal_resolution, intensity, 'o',
+                         label="Frame {}".format(frames))
         plt.xlabel(r'Scattering Vector, q ($nm^{-1}$)',
                    fontdict=self.PLOT_LABEL)
         if log_intensity:
