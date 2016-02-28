@@ -445,14 +445,19 @@ class ScatterAnalysis(object):
         if end_point == -1:
             end_point = len(self.q)
         reciprocal_resolution = self.q[start_point-1:end_point]
-        frames = [i - 1 for i in frames]
+        if isinstance(frames, list):
+            frames = [i - 1 for i in frames]
         intensity = self.I[start_point-1:end_point, frames]
         if log_intensity:
             intensity = np.log(intensity)
         plt.figure(self.PLOT_NUM)
-        for i in xrange(0, intensity.shape[1]):
-            plt.plot(reciprocal_resolution, intensity[:, i], 'o',
-                     label="Frame {}".format(frames[i] + 1))
+        if len(intensity.shape) == 2:
+            for i in xrange(0, intensity.shape[1]):
+                plt.plot(reciprocal_resolution, intensity[:, i], 'o',
+                         label="Frame {}".format(frames[i] + 1))
+        else:
+            plt.plot(reciprocal_resolution, intensity, 'o',
+                     label="Frame {}".format(frames))
         plt.xlabel(r'Scattering Vector, q ($nm^{-1}$)',
                    fontdict=self.PLOT_LABEL)
         if log_intensity:
