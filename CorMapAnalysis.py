@@ -104,12 +104,47 @@ class ScatterAnalysis(object):
             print "FRAME '{}' DOES NOT EXIST".format(frame)
             print "Use different frame numbers between 1 and {}".format(self.I.shape[1])
 
-    def first_diff_frame(self, frame=1, P_threshold=0.01):
-        """Return the first frame that is statistically different from the
-        chosen frame.
+    def find_first_n_diff_frames(self, n=1, frame=1, P_threshold=0.01):
+        """Return the first frame, F, where there are n consecutive frames
+        after F that are also statistically different from the chosen frame.
         """
+        # Get list frames that are different
         list_of_diff_frames = self.find_diff_frames(frame, P_threshold)
-        return list_of_diff_frames[0]
+        if n == 1:
+            # If only looking for one frame then return the first value in
+            # list of different frames.
+            return list_of_diff_frames[0]
+        elif n > 1:
+            # If we're looking for more than one consecutive frame then we need
+            # to keep track of the number of consecutive frames that we've
+            # iterated through.
+            consec_count = 0
+            max_consec_count = 0
+            fr_max_count = 0
+            for i, curr_fr in enumerate(list_of_diff_frames):
+                if i == 0:
+                    prev_fr = curr_fr
+                    consec_count = 1
+                else:
+                    if curr_fr == prev_fr + 1:
+                        consec_count += 1
+                    else:
+                        consec_count = 1
+                prev_fr = curr_fr
+                if consec_count == n:
+                    return curr_fr - n + 1
+                if consec_count > max_consec_count:
+                    max_consec_count = consec_count
+                    fr_max_count = curr_fr - max_consec_count + 1
+            print "************************ WARNING **************************"
+            print "{} consecutive frames not reached!".format(n)
+            print "The max number of consecutive frames was {}".format(max_consec_count)
+            print "The initial frame for that run was frame {}.".format(fr_max_count)
+        else:
+            print "********************** ERROR ***************************"
+            print "n MUST BE A POSITVE INTEGER VALUE"
+            print "User chose n = {}.".format(n)
+            print "Please choose a positve integer value for n."
 
     def similar_frames(self, frame=1, P_threshold=0.01):
         """Return list all of the frames that are similar as defined by the
