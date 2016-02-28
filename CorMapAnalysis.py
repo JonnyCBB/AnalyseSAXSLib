@@ -346,7 +346,7 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     #                    SCATTER PLOT OF PAIRWISE DATA                        #
     # ----------------------------------------------------------------------- #
-    def scatter_plot(self, frame=1, P_threshold=0.01, markersize=60,
+    def plot_scatter(self, frame=1, P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
                      legend_loc="upper left"):
         """Scatter plot of the C values for a chosen frame against all other
