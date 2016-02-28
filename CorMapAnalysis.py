@@ -296,7 +296,7 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     def plot_histogram(self, frame=0, datcmp_data_type="C",
                        display=True, save=False, filename="",
-                       directory=""):
+                       directory="", num_bins=20):
         """Plot histogram of pairwise correlation data
         """
         if datcmp_data_type == "C" or datcmp_data_type == 0:
@@ -318,7 +318,7 @@ class ScatterAnalysis(object):
         #                          PLOT HISTOGRAM                         #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         plt.figure(self.PLOT_NUM)
-        plt.hist(self.get_pw_data_array(frame)[:, dat_type])
+        plt.hist(self.get_pw_data_array(frame)[:, dat_type], bins=num_bins)
         plt.xlabel("{}".format(datcmp_data_type), fontdict=self.PLOT_LABEL)
         plt.ylabel(r'Frequency', fontdict=self.PLOT_LABEL)
         if frame == 0:
