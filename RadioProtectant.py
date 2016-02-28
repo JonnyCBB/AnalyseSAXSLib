@@ -2,6 +2,7 @@
 import numpy as np
 import math
 import os
+from CorMapAnalysis import ScatterAnalysis
 
 
 class Compound(object):
@@ -101,9 +102,16 @@ class Compound(object):
                            buffer_subtraction)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+            #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+            self.doses = self.get_doses(use_frame_nums=True)
+
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            self.doses = self.get_doses()
+            # Create ScatterAnalysis object for each run
+            self.scat_analysis = self.get_data_analysis_objs()
+            self.merge_thresholds = self.get_merging_thresholds()
 
         else:
             print '************************* ERROR **************************'
@@ -142,7 +150,7 @@ CMPD_DICT in the Compound class."""
             # If user wants the runs corresponding the the buffer then return
             # those.
             if self.name == "no_protection":
-                return [29, 33, 35]
+                return [29, 31, 33, 35]
             else:
                 buffer1 = initial_run_number
                 buffer2 = initial_run_number + 4
@@ -153,7 +161,7 @@ CMPD_DICT in the Compound class."""
             # If user wants the runs corresponding to a specific concentration
             # of the compound then return these runs.
             if self.name == "no_protection":
-                return [30, 31, 32]
+                return [30, 32, 34]
             elif concentration in self.CMPD_CONC:
                 conc_index = self.CMPD_CONC.index(concentration)
                 run1 = (conc_index * 4) + initial_run_number + 1
@@ -335,13 +343,55 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                              "1d"))
         return top_level_dir_already_exists
 
-    def get_doses(self):
+    def get_data_analysis_objs(self):
+        """Return list of scatter analyis objects. There are three for each
+        concentration corresponding to the three repeated runs for each
+        concentration. The only exception is for the "no_protection" instance
+        where there is only 1 lot of 3 runs.
+        """
+        scatter_objs = []
+        for i, conc in enumerate(self.CMPD_CONC):
+            run_nums = self.get_run_numbers(concentration=conc,
+                                            buffers=False)
+            if i == 1 and self.name == "no_protection":
+                break
+            else:
+                run_objs = []
+                for run_num in run_nums:
+                    dat_file_prfx = self.get_1d_curve_filename_prefix(run_number=run_num,
+                                                                      new_data_loc_prfx=self.CROPPED_DATA_LOC)
+                    file_prefixes = "{}*.dat".format(dat_file_prfx)
+                    run_objs.append(ScatterAnalysis(file_prefixes))
+                scatter_objs.append(run_objs)
+        return scatter_objs
+
+    def get_merging_thresholds(self, n=3, k=1, P_thresh=0.01):
+        """Get the images corresponding to the first n consecutive frames that
+        are different from the given frame. These are going to be referred to
+        as the merging thresholds. Store the corresponding image for each run
+        in a matrix. Each row of the matrix will correspond to a concentration,
+        and each run will correspond to a column.
+        """
+        if self.name == "no_protection":
+            merging_thresholds = np.zeros([1, 3])
+        else:
+            merging_thresholds = np.zeros([len(self.CMPD_CONC), 3])
+        for i, conc_analysis in enumerate(self.scat_analysis):
+            for j, run in enumerate(conc_analysis):
+                merging_thresholds[i, j] = run.find_first_n_diff_frames(n, k,
+                                                                        P_thresh)
+        return merging_thresholds
+
+    def get_doses(self, use_frame_nums=False):
         """Run RADDOSE-3D to get doses for the Radioprotectant compound
         """
-        ###################################################################
-        # NEED TO SORT THIS METHOD OUT
-        ###################################################################
-        pass
+        if use_frame_nums:
+            return np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES)
+        else:
+            # #################################################################
+            # NEED TO SORT THIS METHOD OUT
+            # #################################################################
+            pass
 
 # ----------------------------------------------------------------------- #
 #                               FUNCTIONS                                 #
