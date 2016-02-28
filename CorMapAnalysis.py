@@ -272,7 +272,11 @@ class ScatterAnalysis(object):
         plt.colorbar(cormap)
         adjP = self.get_pw_data(fr1, fr2, "adj P(>C)")
         C = self.get_pw_data(fr1, fr2, "C")
-        plt.title("Pairwise CorMap: frame {} vs {}. C = {}, adj P(>C) = {}".format(fr1, fr2, C, adjP))
+        if self.x_units:
+            change_in_x = abs(self.x_axis[fr1-1] - self.x_axis[fr2-1])
+            plt.title(r'PW CorMap: frame {} vs {}. C = {}, adj P(>C) = {}, $\Delta${} = {} {}'.format(fr1, fr2, C, adjP, self.x_metric, change_in_x, self.x_units))
+        else:
+            plt.title("Pairwise CorMap: frame {} vs {}. C = {}, adj P(>C) = {}".format(fr1, fr2, C, adjP))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
