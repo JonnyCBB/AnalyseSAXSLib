@@ -148,7 +148,11 @@ class ScatterAnalysis(object):
             print "INVALID DATCMP DATA TYPE CHOSEN: '{}' DOES NOT EXIST".format(datcmp_data_type)
             print "Please choose either 'C', 'P(>C)' or 'adj P(>C)'."
 
-        datcmp_key = "{},{}".format(frame1, frame2)
+        if frame1 < frame2:
+            datcmp_key = "{},{}".format(frame1, frame2)
+        elif frame2 < frame1:
+            datcmp_key = "{},{}".format(frame2, frame1)
+
         if datcmp_key in self.datcmp_data:
             return self.datcmp_data[datcmp_key][dat_type]
         else:
@@ -266,6 +270,9 @@ class ScatterAnalysis(object):
         plt.ylabel(r'Scattering Vector, q (nm$^{-1}$)',
                    fontdict=self.PLOT_LABEL)
         plt.colorbar(cormap)
+        adjP = self.get_pw_data(fr1, fr2, "adj P(>C)")
+        C = self.get_pw_data(fr1, fr2, "C")
+        plt.title("Pairwise CorMap: frame {} vs {}. C = {}, adj P(>C) = {}".format(fr1, fr2, C, adjP))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
