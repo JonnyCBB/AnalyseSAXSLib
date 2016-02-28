@@ -48,7 +48,7 @@ class ScatterAnalysis(object):
             else:
                 print "x_axis_vec is not the same length as the number of"
                 print "frames. Using frame numbers instead."
-                self.x_axis_vec = np.linspace(1, num_frames, num_frames)
+                self.x_axis = np.linspace(1, num_frames, num_frames)
         else:
             self.x_axis = np.linspace(1, num_frames, num_frames)
 
@@ -348,7 +348,7 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     def plot_scatter(self, frame=1, P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
-                     legend_loc="upper left"):
+                     legend_loc="upper left", x_change=False):
         """Scatter plot of the C values for a chosen frame against all other
         frames.
         """
@@ -362,8 +362,11 @@ class ScatterAnalysis(object):
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         pwframe_data = self.get_pw_data_array(frame=frame,
                                               delete_zero_row=False)
-        pwframe_data = np.column_stack([np.linspace(1, pwframe_data.shape[0],
-                                                    pwframe_data.shape[0]), pwframe_data])
+        if x_change:
+            sub = self.x_axis[frame - 1]
+            pwframe_data = np.column_stack([abs(self.x_axis - sub), pwframe_data])
+        else:
+            pwframe_data = np.column_stack([self.x_axis, pwframe_data])
         pwframe_data = np.delete(pwframe_data, (frame-1), axis=0)
 
         colours = ["#0072B2", "#009E73", "#D55E00"]
@@ -389,7 +392,20 @@ class ScatterAnalysis(object):
                     label=lb_dict[2][1])
 
         plt.legend(loc=legend_loc, scatterpoints=1)
-        plt.xlabel("Frame number", fontdict=self.PLOT_LABEL)
+        if x_change:
+            if self.x_units:
+                plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
+                           fontdict=self.PLOT_LABEL)
+            else:
+                plt.xlabel(r'$\Delta${}'.format(self.x_metric),
+                           fontdict=self.PLOT_LABEL)
+        else:
+            if self.x_units:
+                plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
+                           fontdict=self.PLOT_LABEL)
+            else:
+                plt.xlabel("{}".format(self.x_metric),
+                           fontdict=self.PLOT_LABEL)
         plt.ylabel(r'C', fontdict=self.PLOT_LABEL)
         plt.title("C values against frame number for frame {}".format(frame))
 
