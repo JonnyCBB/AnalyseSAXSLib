@@ -369,17 +369,19 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         """Get the images corresponding to the first n consecutive frames that
         are different from the given frame. These are going to be referred to
         as the merging thresholds. Store the corresponding image for each run
-        in a matrix. Each row of the matrix will correspond to a concentration,
-        and each run will correspond to a column.
+        in a dictionary. The key will correspond to the concentration of the
+        radioprotectant compound and the value will be a list containing the
+        corresponding frames numbers of the merging threshold for each run.
         """
-        if self.name == "no_protection":
-            merging_thresholds = np.zeros([1, 3])
-        else:
-            merging_thresholds = np.zeros([len(self.CMPD_CONC), 3])
+        merging_thresholds = {}
         for i, conc_analysis in enumerate(self.scat_analysis):
+            frames = list(range(3))
             for j, run in enumerate(conc_analysis):
-                merging_thresholds[i, j] = run.find_first_n_diff_frames(n, k,
-                                                                        P_thresh)
+                frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
+            if self.name == "no_protection":
+                merging_thresholds[0] = frames
+            else:
+                merging_thresholds[self.CMPD_CONC[i]] = frames
         return merging_thresholds
 
     def get_doses(self, use_frame_nums=False):
