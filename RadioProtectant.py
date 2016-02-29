@@ -79,7 +79,7 @@ class Compound(object):
 # ----------------------------------------------------------------------- #
     def __init__(self, compound_name, buffer_subtraction=True,
                  average_type="mean", crop_start=1, crop_end=-1,
-                 overwrite=True):
+                 overwrite=True, dose_metric="DWD", dose_units="kGy"):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -110,7 +110,8 @@ class Compound(object):
             #                 CORRELATION ANALYSIS OF FRAMES                  #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             # Create ScatterAnalysis object for each run
-            self.scat_analysis = self.get_data_analysis_objs()
+            self.scat_analysis = self.get_data_analysis_objs(dose_metric,
+                                                             dose_units)
             self.merge_thresholds = self.get_merging_thresholds()
 
         else:
@@ -343,7 +344,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                              "1d"))
         return top_level_dir_already_exists
 
-    def get_data_analysis_objs(self):
+    def get_data_analysis_objs(self, metric, units):
         """Return list of scatter analyis objects. There are three for each
         concentration corresponding to the three repeated runs for each
         concentration. The only exception is for the "no_protection" instance
@@ -361,7 +362,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     dat_file_prfx = self.get_1d_curve_filename_prefix(run_number=run_num,
                                                                       new_data_loc_prfx=self.CROPPED_DATA_LOC)
                     file_prefixes = "{}*.dat".format(dat_file_prfx)
-                    run_objs.append(ScatterAnalysis(file_prefixes))
+                    run_objs.append(ScatterAnalysis(file_prefixes, self.doses,
+                                                    metric, units))
                 scatter_objs.append(run_objs)
         return scatter_objs
 
@@ -393,7 +395,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             # #################################################################
             # NEED TO SORT THIS METHOD OUT
             # #################################################################
-            pass
+            return np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES)
 
 # ----------------------------------------------------------------------- #
 #                               FUNCTIONS                                 #
