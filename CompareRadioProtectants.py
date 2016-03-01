@@ -3,6 +3,9 @@ the SAXS analysis experiments
 """
 from RadioProtectant import Compound
 import pandas as pd
+import seaborn as sns
+import os
+import matplotlib.pyplot as plt
 
 
 class ComparisonAnalysis(object):
@@ -15,7 +18,8 @@ class ComparisonAnalysis(object):
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01):
+                 P_threshold=0.01, plot_dir="Plots",
+                 rp_comp_dir="RP_Comparisons", plot_file_type="pdf"):
         # Return dictionary of Compound objects
         self.compounds = process_compounds(cmpd_list=compound_list,
                                            crop_start=crop_start,
@@ -31,6 +35,11 @@ class ComparisonAnalysis(object):
                                            P_threshold=P_threshold)
         # Create a dataframe with compound information
         self.cmpd_df = self.create_compound_df(runs_per_conc)
+
+        # Create comparison plots
+        self.concentration_dependence_plots(plot_dir, plot_file_type)
+        self.radioprotectant_comparison_plot(plot_dir, rp_comp_dir,
+                                             plot_file_type)
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -63,6 +72,37 @@ class ComparisonAnalysis(object):
                     counter += 1
         return df
 
+    def concentration_dependence_plots(self, plot_dir, file_type):
+        """Create box plots showing the dependence of compound efficacy with
+        different concentrations.
+        """
+        for cmpd_data in self.compounds.itervalues():
+            cmpd_name = cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]]
+            chart, ax = plt.subplots()
+            sns_plot = sns.boxplot(x="Concentration (mM)",
+                                   y="Dose (kGy)",
+                                   data=self.cmpd_df[self.cmpd_df["Compound"] == cmpd_name],
+                                   ax=ax)
+            sns_plot.set_title("{}".format(cmpd_name))
+            make_data_dirs(plot_dir)
+            file_loc = "../{}/{}.{}".format(plot_dir, cmpd_name, file_type)
+            sns_plot.figure.savefig(file_loc)
+
+    def radioprotectant_comparison_plot(self, plot_dir, comp_dir, file_type):
+        """Create box plots showing the efficacy of each radioprotectant
+        compound
+        """
+        for conc in Compound.CMPD_CONC:
+            chart, ax = plt.subplots()
+            sns_plot = sns.boxplot(x="Compound", y="Dose (kGy)", ax=ax,
+                                   data=self.cmpd_df[self.cmpd_df["Concentration (mM)"] == conc])
+            sns_plot.set_title("Concentration = {} (mM)".format(conc))
+            make_data_dirs(plot_dir, comp_dir)
+            file_loc = "../{}/{}/Concentration_{}.{}".format(plot_dir,
+                                                             comp_dir,
+                                                             conc, file_type)
+            sns_plot.figure.savefig(file_loc)
+
 # ----------------------------------------------------------------------- #
 #                               FUNCTIONS                                 #
 # ----------------------------------------------------------------------- #
@@ -88,3 +128,14 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    frame_comp=frame_comp,
                                    P_threshold=P_threshold)
     return cmpd_data
+
+
+def make_data_dirs(top_level_dir, second_level_dir=""):
+    """Make directory structure for the comparison plots.
+    """
+    if not os.path.exists("../{}".format(top_level_dir)):
+        os.makedirs("../{}".format(top_level_dir))
+    if second_level_dir:
+        if not os.path.exists("../{}/{}".format(top_level_dir,
+                                                second_level_dir)):
+            os.makedirs("../{}/{}".format(top_level_dir, second_level_dir))
