@@ -3,6 +3,7 @@ import numpy as np
 import math
 import os
 from CorMapAnalysis import ScatterAnalysis
+import matplotlib.pyplot as plt
 
 
 class Compound(object):
@@ -24,6 +25,10 @@ class Compound(object):
     CROPPED_DATA_LOC = "../cropped"  # Location of cropped data
 
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
+
+    FLUX_SCALE_FAC = 10.0  # Scale factor to convert diodes readins to flux
+
+    PLOT_NUM = 0  # Keep count of number of plots
 
     # Dictionary allowing user to define various names for the radioprotectant
     # compounds. This is in case they don't know the symbol used for the
@@ -81,7 +86,7 @@ class Compound(object):
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01):
+                 P_threshold=0.01, plot_dir="Plots"):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -89,6 +94,7 @@ class Compound(object):
         lowercase_cmpd_name = compound_name.lower()  # convert to lower case
         if lowercase_cmpd_name in self.CMPD_DICT:  # Check cmp is in dictionary
             self.name = self.CMPD_DICT[lowercase_cmpd_name]  # Extract name
+            self.plot_dir = plot_dir
 
             # Subtract the buffer if the user specifies
             if buffer_subtraction:
@@ -106,7 +112,7 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            self.doses = self.get_doses(use_frame_nums=use_frames)
+            self.diode_readings, self.doses = self.parse_bsxcube()
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -390,16 +396,62 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 merging_thresholds[self.CMPD_CONC[i]] = frames
         return merging_thresholds
 
-    def get_doses(self, use_frame_nums=False):
+    def parse_bsxcube(self, use_frame_nums=False):
         """Run RADDOSE-3D to get doses for the Radioprotectant compound
         """
         if use_frame_nums:
-            return np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES)
+            return (np.ones(self.NUM_FRAMES),
+                    np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
         else:
             # #################################################################
             # NEED TO SORT THIS METHOD OUT
             # #################################################################
-            return np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES)
+            return (np.ones(self.NUM_FRAMES),
+                    np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
+
+    def plot_diode_readings(self, plot_flux=True, display=True, save=False,
+                            filename="", directory=""):
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SORT Y-VALUES                          #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if plot_flux:
+            y_vals = self.diode_readings * self.FLUX_SCALE_FAC
+        else:
+            y_vals = self.diode_readings
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                    PLOT DIODE/FLUX READINGS                     #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        self.PLOT_NUM += 1
+        plt.figure(self.PLOT_NUM)
+        plt.plot(np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES), y_vals, 'o')
+        plt.xlabel("Frame number")
+        if plot_flux:
+            plt.ylabel("Flux (photons/sec)")
+        else:
+            plt.ylabel("Diode reading (cts/sec)")
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                if not os.path.exists("../{}".format(directory)):
+                    os.makedirs("../{}".format(directory))
+                plot_path = "../{}/{}".format(directory, filename)
+            else:
+                if not os.path.exists("../{}".format(self.plot_dir)):
+                    os.makedirs("../{}".format(self.plot_dir))
+                plot_path = "../{}/{}".format(self.plot_dir, filename)
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
 
 # ----------------------------------------------------------------------- #
 #                               FUNCTIONS                                 #
