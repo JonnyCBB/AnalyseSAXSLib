@@ -13,9 +13,9 @@ from CompareRadioProtectants import ComparisonAnalysis
 # none = Compound(compound_name="np", crop_start=25, crop_end=700, overwrite=False)
 # asc = Compound(compound_name="asc", crop_start=25, crop_end=700, overwrite=False)
 
-compounds = ["np", "asc", "dtt"]
+compounds = ["np", "dtt", "suc", "tempo", "tre", "no3", "asc", "gly", "etgly"]
 a = ComparisonAnalysis(compound_list=compounds, crop_start=25, crop_end=700,
-                       overwrite=False)
+                       overwrite=True)
 # num_df_rows = len(Compound.CMPD_CONC) * num_runs_per_conc * len(compounds)
 # index = list(range(num_df_rows))
 # columns = ['Dose (kGy)', 'Frame Number', 'Compound', 'Concentration (mM)',
