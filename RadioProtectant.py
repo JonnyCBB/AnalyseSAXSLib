@@ -55,7 +55,7 @@ class Compound(object):
     # Dictionary containing various information about each radioprotectant.
     # This includes the file prefixes used to find various files for each
     # radio protectant and the preferred name for each compound.
-    CMPD_INFO = {"no_protection": ["np", [29, 35], [14], "None"],
+    CMPD_INFO = {"no_protection": ["np", [29, 35], [14], "No Protection"],
                  "Asc": ["Asc", [95, 110], [10, 9], "Ascorbate"],
                  "DTT": ["DTT", [191, 206], [5, 4], "DTT"],
                  "EtGly": ["EtGly", [79, 94], [11, 10], "Ethylene Glycol"],
