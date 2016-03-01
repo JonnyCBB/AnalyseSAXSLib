@@ -88,6 +88,7 @@ class ComparisonAnalysis(object):
             make_data_dirs(plot_dir)
             file_loc = "../{}/{}.{}".format(plot_dir, cmpd_name, file_type)
             sns_plot.figure.savefig(file_loc)
+            sns.plt.close(sns_plot.figure)
 
     def radioprotectant_comparison_plot(self, plot_dir, comp_dir, file_type):
         """Create box plots showing the efficacy of each radioprotectant
@@ -103,6 +104,9 @@ class ComparisonAnalysis(object):
                                                              comp_dir,
                                                              conc, file_type)
             sns_plot.figure.savefig(file_loc)
+            sns.plt.close(sns_plot.figure)
+
+
 
 # ----------------------------------------------------------------------- #
 #                               FUNCTIONS                                 #
