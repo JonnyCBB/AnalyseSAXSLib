@@ -120,8 +120,9 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             diode_readings, self.doses = self.get_doses()
 
-            # currently 'diode_readings' is a dictionary and code below requires 
-            # single numpy array so pick 1 conc and 1 run to allow code to continue
+            # currently 'diode_readings' is a dictionary and code below
+            # requires single numpy array so pick 1 conc and 1 run to allow
+            # code to continue
             if self.name == 'no_protection':
                 i = 0
             else:
@@ -431,9 +432,9 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         """
 
         # choose only BsxCuBE logs file for which compound present
-        dat_file_prefix   = self.CMPD_INFO[self.name][self.LIST_INDEX["dat_file_prefix"]]
+        dat_file_prefix = self.CMPD_INFO[self.name][self.LIST_INDEX["dat_file_prefix"]]
         BsxCuBE_file_inds = self.CMPD_INFO[self.name][self.LIST_INDEX["bsxcube_log"]]
-        BsxCuBE_log_files = ['{}/BsxCuBE.log.{}'.format(self.DATA_LOC_PREFIX,ind) for ind in BsxCuBE_file_inds]
+        BsxCuBE_log_files = ['{}/BsxCuBE.log.{}'.format(self.DATA_LOC_PREFIX, ind) for ind in BsxCuBE_file_inds]
 
         # create a dictionary 'diode_dic' with keys = concentrations
         # and subkeys = run numbers
@@ -443,15 +444,16 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                             buffers=False)
             if self.name == "no_protection":
                 conc = 0
-                if i == 1: break
+                if i == 1:
+                    break
             diode_dic[conc] = {}
             for j, run_num in enumerate(run_nums):
-                diode_vals,image_nums = [],[]
+                diode_vals, image_nums = [], []
                 for BsxCuBE_file in BsxCuBE_log_files:
-                    log_open = open(BsxCuBE_file,'r')
+                    log_open = open(BsxCuBE_file, 'r')
                     for l in log_open.readlines():
                         key_words = ("CollectBrick",
-                                     "{}_{}{}".format(dat_file_prefix,'0'*(3-len(str(run_num))),run_num),
+                                     "{}_{}{}".format(dat_file_prefix, '0'*(3-len(str(run_num))), run_num),
                                      ".edf' was collected... (diode:")
                         if all(x in l for x in key_words):
                             diode_vals.append(float(l.split('diode:')[1].split(',')[0]))
@@ -463,10 +465,10 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 diode_dic[conc][j] = np.array(diode_vals_sorted)
 
                 # check that correct number of diode values parsed
-                if len(diode_vals_sorted) != self.NUM_FRAMES: print 'ERROR'
+                if len(diode_vals_sorted) != self.NUM_FRAMES:
+                    print 'ERROR'
 
         return diode_dic
-        # return np.zeros(self.NUM_FRAMES)
 
     def plot_diode_readings(self, plot_flux=True, display=True, save=False,
                             filename="", directory=""):
