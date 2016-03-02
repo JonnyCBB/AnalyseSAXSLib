@@ -1,3 +1,4 @@
+import ipdb
 """ Class that looks after each Radio protectant compound. This includes
 sorting information about the files that store the information for each
 compound, the dose accumulated for each compound and their efficacy for
@@ -32,7 +33,10 @@ class Compound(object):
 
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
 
-    FLUX_SCALE_FAC = 10.0  # Scale factor to convert diodes readins to flux
+    # Scale factor to convert diodes readings to flux
+    FLUX_SCALE_FAC = 2719400000000000
+
+    FLUX_ADD_FAC = 3.25993
 
     PLOT_NUM = 0  # Keep count of number of plots
 
@@ -118,16 +122,7 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            diode_readings, self.doses = self.get_doses()
-
-            # currently 'diode_readings' is a dictionary and code below
-            # requires single numpy array so pick 1 conc and 1 run to allow
-            # code to continue
-            if self.name == 'no_protection':
-                i = 0
-            else:
-                i = 1
-            self.diode_readings = diode_readings[i][0]
+            self.diode_readings, self.doses = self.get_doses()
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -428,6 +423,14 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             # NEED TO SORT THIS METHOD OUT
             # #################################################################
             diode_readings = self.parse_bsxcube()
+
+            # Convert diode readings to flux
+            flux_readings = {}
+            for conc, readings in diode_readings.iteritems():
+                flux_readings[conc] = (self.FLUX_ADD_FAC +
+                                       self.FLUX_SCALE_FAC * readings)
+            ipdb.set_trace()  ######### Break Point ###########
+
             return (diode_readings,
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
 
