@@ -1,4 +1,10 @@
-""" Class defining the radioprotectant compounds"""
+""" Class that looks after each Radio protectant compound. This includes
+sorting information about the files that store the information for each
+compound, the dose accumulated for each compound and their efficacy for
+protecting against radiation damage.
+Since the file locations are kept here, this class also deals with manipulation
+of the data in the files, i.e. buffer avergaing and subtraction and cropping.
+"""
 import numpy as np
 import math
 import os

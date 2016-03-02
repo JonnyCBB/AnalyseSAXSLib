@@ -1,5 +1,5 @@
-"""CorMap class implementing some analyis of results from the ATSAS suite
-program DATCMP
+"""CorMap class implementing analyis of results from the ATSAS suite program
+DATCMP.
 """
 import glob
 import subprocess
