@@ -450,7 +450,6 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 conc = 0
                 if i == 1:
                     break
-            diode_dic[conc] = {}
             for j, run_num in enumerate(run_nums):
                 diode_vals, image_nums = [], []
                 for BsxCuBE_file in BsxCuBE_log_files:
@@ -466,7 +465,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
 
                 # ensure diode values ordered by image number
                 image_nums_sorted, diode_vals_sorted = (list(t) for t in zip(*sorted(zip(image_nums, diode_vals))))
-                diode_dic[conc][j] = np.array(diode_vals_sorted)
+                diode_dic[conc] = np.array(diode_vals_sorted)
 
                 # check that correct number of diode values parsed
                 if len(diode_vals_sorted) != self.NUM_FRAMES:
