@@ -112,7 +112,7 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            self.diode_readings, self.doses = self.parse_bsxcube()
+            self.diode_readings, self.doses = self.get_doses()
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -396,18 +396,26 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 merging_thresholds[self.CMPD_CONC[i]] = frames
         return merging_thresholds
 
-    def parse_bsxcube(self, use_frame_nums=False):
-        """Run RADDOSE-3D to get doses for the Radioprotectant compound
+    def get_doses(self, use_frame_nums=False):
+        """Parse the BsxCuBE log file to get the diode readings and then
+        calculate the dose for each frame from the diode readings by running
+        RADDOSE-3D.
         """
         if use_frame_nums:
-            return (np.ones(self.NUM_FRAMES),
+            return (np.zeros(self.NUM_FRAMES),
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
         else:
             # #################################################################
             # NEED TO SORT THIS METHOD OUT
             # #################################################################
-            return (np.ones(self.NUM_FRAMES),
+            diode_readings = self.parse_bsxcube()
+            return (diode_readings,
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
+
+    def parse_bsxcube(self):
+        """Parse the BsxCuBE log file to get the diode readings
+        """
+        return np.zeros(self.NUM_FRAMES)
 
     def plot_diode_readings(self, plot_flux=True, display=True, save=False,
                             filename="", directory=""):
