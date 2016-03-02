@@ -135,6 +135,7 @@ class Compound(object):
             # Create ScatterAnalysis object for each run
             self.scat_analysis = self.get_data_analysis_objs(dose_metric,
                                                              dose_units)
+
             self.merge_thresholds = self.get_merging_thresholds(num_consec_frames,
                                                                 frame_comp,
                                                                 P_threshold)
@@ -375,7 +376,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         concentration. The only exception is for the "no_protection" instance
         where there is only 1 lot of 3 runs.
         """
-        scatter_objs = []
+        scatter_objs = {}
         for i, conc in enumerate(self.CMPD_CONC):
             run_nums = self.get_run_numbers(concentration=conc,
                                             buffers=False)
@@ -389,7 +390,10 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     file_prefixes = "{}*.dat".format(dat_file_prfx)
                     run_objs.append(ScatterAnalysis(file_prefixes, self.doses,
                                                     metric, units))
-                scatter_objs.append(run_objs)
+                if self.name == "no_protection":
+                    scatter_objs[0] = run_objs
+                else:
+                    scatter_objs[conc] = run_objs
         return scatter_objs
 
     def get_merging_thresholds(self, n=3, k=1, P_thresh=0.01):
@@ -401,7 +405,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         corresponding frames numbers of the merging threshold for each run.
         """
         merging_thresholds = {}
-        for i, conc_analysis in enumerate(self.scat_analysis):
+        for i, conc_analysis in enumerate(self.scat_analysis.itervalues()):
             frames = list(range(3))
             for j, run in enumerate(conc_analysis):
                 frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
