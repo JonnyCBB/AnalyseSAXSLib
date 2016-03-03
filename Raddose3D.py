@@ -57,14 +57,15 @@ class Raddose3d(object):
     def __init__(self, flux_array, exposure_per_frame, dose_type="DWD"):
         self.write_raddose3d_input_file(flux_array, exposure_per_frame)
         self.run_raddose3d()
-        dose_vals = self.get_dwd_values(dose_type)
-        if len(dose_vals) != len(flux_array):
+        self.dose_vals = self.get_dwd_values(dose_type)
+        if len(self.dose_vals) != len(flux_array):
             print '************************* ERROR **************************'
-            print "Length of the dose array: {} does not equal length of flux array: {}".format(len(dose_vals), len(flux_array))
+            print "Length of the dose array: {} does not equal length of flux array: {}".format(len(self.dose_vals), len(flux_array))
             print "This needs to be sorted."
-        self.dose_vals = np.divide(dose_vals.cumsum(),
-                                   np.linspace(1, len(dose_vals),
-                                               len(dose_vals)))
+        if dose_type == "DWD":
+            self.dose_vals = np.divide(self.dose_vals.cumsum(),
+                                       np.linspace(1, len(self.dose_vals),
+                                                   len(self.dose_vals)))
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
