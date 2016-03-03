@@ -34,9 +34,9 @@ class Compound(object):
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
 
     # Scale factor to convert diodes readings to flux
-    FLUX_SCALE_FAC = 2719400000000000
+    FLUX_SCALE_FAC = 2722950000000000
 
-    FLUX_ADD_FAC = 3.25993
+    FLUX_ADD_FAC = 5.72293
 
     PLOT_NUM = 0  # Keep count of number of plots
 
