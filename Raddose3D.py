@@ -35,6 +35,10 @@ class Raddose3d(object):
     # ----------------------------------------------------------------------- #
     def __init__(self, flux_array, exposure_per_frame):
         self.write_raddose3d_input_file(flux_array, exposure_per_frame)
+        
+    # ----------------------------------------------------------------------- #
+    #                         INSTANCE METHODS                                #
+    # ----------------------------------------------------------------------- #
 
     def write_raddose3d_input_file(self, flux_array, exposure_per_frame):
         """Write a RADDOSE-3D input file for a SAXS run
@@ -47,6 +51,8 @@ class Raddose3d(object):
         rd_file.close()
 
     def writeCRYSTALBLOCK(self):
+        """Method to write the crystal block for the RADDOSE-3D input file.
+        """
     	raddose3dinputCRYSTALBLOCK = """
 ##############################################################################
 #                                 Crystal Block                              #
@@ -69,6 +75,8 @@ ContainerDensity {}
         return raddose3dinputCRYSTALBLOCK
 
     def writeBEAMBLOCK(self, flux, block_num=""):
+        """Method to write the beam block for the RADDOSE-3D input file.
+        """
     	raddose3dinputBEAMBLOCK = """
 ##############################################################################
 #                             Beam Block {}                                  #
@@ -86,6 +94,8 @@ Collimation Rectangular {}
         return raddose3dinputBEAMBLOCK
 
     def writeWEDGEBLOCK(self, exposure_time, block_num=""):
+        """Method to write the wedge block for the RADDOSE-3D input file.
+        """
     	raddose3dinputWEDGEBLOCK = """
 ##############################################################################
 #                             Wedge Block {}                                 #
