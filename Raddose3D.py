@@ -4,6 +4,7 @@ from
 """
 import subprocess
 import numpy as np
+import os
 
 
 class Raddose3d(object):
@@ -66,6 +67,7 @@ class Raddose3d(object):
             self.dose_vals = np.divide(self.dose_vals.cumsum(),
                                        np.linspace(1, len(self.dose_vals),
                                                    len(self.dose_vals)))
+        self.delete_raddose3d_files()
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -85,13 +87,20 @@ class Raddose3d(object):
         """Run RADDOSE-3D
         """
         terminalCommand = "java -jar {} -i {} -r raddose.exe".format(self.RADDOSE3D_EXE, self.RADDOSE3D_INPUT_FILENAME)
-        subprocess.Popen(terminalCommand, stdout=subprocess.PIPE, shell=True)
+        subprocess.call(terminalCommand)
 
     def get_dwd_values(self, dose_type="DWD"):
         """Extract DWD values from csv file
         """
         data = np.genfromtxt(self.RADDOSE3D_SUMMARY_CSV, delimiter=',')
         return data[1:, self.CSV_COLUMNS[dose_type]]
+
+    def delete_raddose3d_files(self):
+        """Delete the files used/output by RADDOSE-3D
+        """
+        [os.remove(f) for f in self.RADDOSE3D_OUTPUT_FILES if os.path.isfile(f)]
+        if os.path.isfile(self.RADDOSE3D_INPUT_FILENAME):
+            os.remove(self.RADDOSE3D_INPUT_FILENAME)
 
     def writeCRYSTALBLOCK(self):
         """Method to write the crystal block for the RADDOSE-3D input file.
