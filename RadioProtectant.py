@@ -470,7 +470,7 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
         """Save doses to CSV files
         """
         dose_file_dir = "../{}/{}".format(dose_dir, self.name)
-        if os.path.exists(dose_file_dir):
+        if not os.path.exists(dose_file_dir):
             os.makedirs(dose_file_dir)
 
         for conc, dose_array in self.doses.iteritems():
@@ -478,7 +478,7 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
             np.savetxt(dose_file_name, dose_array, delimiter=",")
 
         diode_file_dir = "../{}/{}".format(diode_dir, self.name)
-        if os.path.exists(diode_file_dir):
+        if not os.path.exists(diode_file_dir):
             os.makedirs(diode_file_dir)
 
         for conc, diode_array in self.diode_readings.iteritems():
