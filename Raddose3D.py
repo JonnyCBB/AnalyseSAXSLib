@@ -37,8 +37,13 @@ class Raddose3d(object):
         self.write_raddose3d_input_file(flux_array, exposure_per_frame)
 
     def write_raddose3d_input_file(self, flux_array, exposure_per_frame):
+        """Write a RADDOSE-3D input file for a SAXS run
+        """
         rd_file = open("raddose3d_input.txt", "w")
         rd_file.write(self.writeCRYSTALBLOCK())
+        for i, flux in enumerate(flux_array):
+            rd_file.write(self.writeBEAMBLOCK(flux, i+1))
+            rd_file.write(self.writeWEDGEBLOCK(exposure_per_frame, i+1))
         rd_file.close()
 
     def writeCRYSTALBLOCK(self):
@@ -63,10 +68,10 @@ ContainerDensity {}
            self.CON_DENS)
         return raddose3dinputCRYSTALBLOCK
 
-    def writeBEAMBLOCK(self, flux):
+    def writeBEAMBLOCK(self, flux, block_num=""):
     	raddose3dinputBEAMBLOCK = """
 ##############################################################################
-#                                  Beam Block                                #
+#                             Beam Block {}                                  #
 ##############################################################################
 
 Beam
@@ -76,16 +81,18 @@ FWHM {}
 Energy {}
 Collimation Rectangular {}
 
-""".format(self.BEAM_TYPE, flux, self.FWHM, self.ENERGY, self.COLLIMATION)
+""".format(block_num, self.BEAM_TYPE, flux, self.FWHM, self.ENERGY,
+           self.COLLIMATION)
         return raddose3dinputBEAMBLOCK
 
-    def writeWEDGEBLOCK(self, exposure_time):
+    def writeWEDGEBLOCK(self, exposure_time, block_num=""):
     	raddose3dinputWEDGEBLOCK = """
 ##############################################################################
-#                                  Wedge Block                               #
+#                             Wedge Block {}                                 #
 ##############################################################################
 
-Wedge {} {}
+Wedge {}
 ExposureTime {}
-""".format(self.WEDGE, exposure_time)
+
+""".format(block_num, self.WEDGE, exposure_time)
         return raddose3dinputWEDGEBLOCK
