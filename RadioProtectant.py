@@ -100,7 +100,8 @@ class Compound(object):
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses"):
+                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
+                 diode_dir="Diode_Readings"):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -127,7 +128,7 @@ class Compound(object):
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
-            self.save_doses_to_csv(dose_dir)
+            self.save_doses_and_diode_to_csv(dose_dir, diode_dir)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -457,7 +458,7 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
 
             return (diode_readings, doses)
 
-    def save_doses_to_csv(self, dose_dir):
+    def save_doses_and_diode_to_csv(self, dose_dir, diode_dir):
         """Save doses to CSV files
         """
         dose_file_dir = "../{}/{}".format(dose_dir, self.name)
@@ -467,6 +468,14 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
         for conc, dose_array in self.doses.iteritems():
             dose_file_name = "{}/doses_conc_{}.csv".format(dose_file_dir, conc)
             np.savetxt(dose_file_name, dose_array, delimiter=",")
+
+        diode_file_dir = "../{}/{}".format(diode_dir, self.name)
+        if os.path.exists(diode_file_dir):
+            os.makedirs(diode_file_dir)
+
+        for conc, diode_array in self.diode_readings.iteritems():
+            diode_file_name = "{}/doses_conc_{}.csv".format(diode_file_dir, conc)
+            np.savetxt(diode_file_name, diode_array, delimiter=",")
 
     def diode_to_flux(self, diode_readings):
         """Method to convert from diode reading to flux readings

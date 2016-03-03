@@ -19,7 +19,8 @@ class ComparisonAnalysis(object):
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
                  P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
-                 rp_comp_dir="RP_Comparisons", plot_file_type="pdf"):
+                 diode_dir="Diode_Readings", rp_comp_dir="RP_Comparisons",
+                 plot_file_type="pdf"):
         # Return dictionary of Compound objects
         self.compounds = process_compounds(cmpd_list=compound_list,
                                            crop_start=crop_start,
@@ -34,7 +35,8 @@ class ComparisonAnalysis(object):
                                            frame_comp=frame_comp,
                                            P_threshold=P_threshold,
                                            plot_dir=plot_dir,
-                                           dose_dir=dose_dir)
+                                           dose_dir=dose_dir,
+                                           diode_dir=diode_dir)
         # Create a dataframe with compound information
         self.cmpd_df = self.create_compound_df(runs_per_conc)
 
@@ -134,7 +136,7 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    num_consec_frames=num_consec_frames,
                                    frame_comp=frame_comp,
                                    P_threshold=P_threshold, plot_dir=plot_dir,
-                                   dose_dir=dose_dir)
+                                   dose_dir=dose_dir, diode_dir=diode_dir)
     return cmpd_data
 
 
