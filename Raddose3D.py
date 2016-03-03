@@ -34,7 +34,7 @@ class Raddose3d(object):
     # CRYSTAL
     CRYST_TYPE = "Cylinder"
     DIMS = "1700 1000"
-    PPM = 0.01
+    PPM = 0.005
     COCAL = "SAXSseq"
     SEQ_FILE = "4us6_GI.txt"
     PROT_CONC = 1.0
