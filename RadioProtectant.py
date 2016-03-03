@@ -406,14 +406,25 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         corresponding frames numbers of the merging threshold for each run.
         """
         merging_thresholds = {}
-        for i, conc_analysis in enumerate(self.scat_analysis.itervalues()):
+        for conc, conc_analysis in self.scat_analysis.iteritems():
             frames = list(range(3))
             for j, run in enumerate(conc_analysis):
+                # Check that first three frames correlated with each other.
+                adjP_1_2 = run.get_pw_data(1, 2, "adj P(>C)")
+                adjP_1_3 = run.get_pw_data(1, 3, "adj P(>C)")
+                adjP_2_3 = run.get_pw_data(2, 3, "adj P(>C)")
+                if adjP_1_2 != 1.0 or adjP_1_3 != 1.0 or adjP_2_3 != 1.0:
+                    print '******************** WARNING *********************'
+                    print 'FIRST THREE FRAMES DO NOT CORRELATE'
+                    print """Check frames for compound: {}, concentration: {},
+and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferred_name"]],
+                             conc, j + 1)
+                # Find frame at which we believe extensive damage has occured.
                 frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
             if self.name == "no_protection":
                 merging_thresholds[0] = frames
             else:
-                merging_thresholds[self.CMPD_CONC[i]] = frames
+                merging_thresholds[conc] = frames
         return merging_thresholds
 
     def get_doses(self, use_frame_nums=False):
