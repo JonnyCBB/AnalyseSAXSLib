@@ -492,13 +492,13 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
         doses = {}
         for f in os.listdir(dose_file_dir):
             conc = float(f.split("_")[-1].split(".")[0])
-            doses[conc] = np.genfromtxt(f, delimiter=',')
+            doses[conc] = np.genfromtxt("{}/{}".format(dose_file_dir, f), delimiter=',')
 
         diode_file_dir = "../{}/{}".format(diode_dir, self.name)
         diode_readings = {}
         for f in os.listdir(diode_file_dir):
             conc = float(f.split("_")[-1].split(".")[0])
-            diode_readings[conc] = np.genfromtxt(f, delimiter=',')
+            diode_readings[conc] = np.genfromtxt("{}/{}".format(diode_file_dir, f), delimiter=',')
 
         return (diode_readings, doses)
 
