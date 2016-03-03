@@ -1,4 +1,3 @@
-import ipdb
 """ Class that looks after each Radio protectant compound. This includes
 sorting information about the files that store the information for each
 compound, the dose accumulated for each compound and their efficacy for
@@ -434,14 +433,18 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             # Convert diode readings to flux
             flux_readings = {}
             for conc, readings in diode_readings.iteritems():
-                flux_readings[conc] = (self.FLUX_ADD_FAC +
-                                       self.FLUX_SCALE_FAC * readings)
+                flux_readings[conc] = self.diode_to_flux(readings)
 
             doses = {}
             for conc, readings in diode_readings.iteritems():
                 doses[conc] = 1e6 * readings
 
             return (diode_readings, doses)
+
+    def diode_to_flux(self, diode_readings):
+        """Method to convert from diode reading to flux readings
+        """
+        return self.FLUX_ADD_FAC + self.FLUX_SCALE_FAC * diode_readings
 
     def parse_bsxcube(self):
         """Parse the BsxCuBE log file to get the diode readings
@@ -486,16 +489,18 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
 
         return diode_dic
 
-    def plot_diode_readings(self, plot_flux=True, display=True, save=False,
-                            filename="", directory=""):
+    def plot_diode_readings(self, concentration, run_number, plot_flux=True,
+                            display=True, save=False, filename="",
+                            directory=""):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                          SORT Y-VALUES                          #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         if plot_flux:
-            y_vals = self.diode_readings * self.FLUX_SCALE_FAC
+            y_vals = self.diode_to_flux(self.diode_readings[concentration])
+            y_vals = y_vals[:, run_number-1]
         else:
-            y_vals = self.diode_readings
+            y_vals = self.diode_readings[concentration][:, run_number-1]
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                    PLOT DIODE/FLUX READINGS                     #
