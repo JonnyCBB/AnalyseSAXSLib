@@ -62,9 +62,10 @@ class ComparisonAnalysis(object):
                 for run_num in xrange(0, num_runs_per_conc):
                     if cmpd_data.name == "no_protection":
                         frame_num = cmpd_data.merge_thresholds[0][run_num]
+                        dose_value = cmpd_data.doses[0][frame_num-1, run_num]
                     else:
                         frame_num = cmpd_data.merge_thresholds[conc][run_num]
-                    dose_value = cmpd_data.doses[frame_num-1]
+                        dose_value = cmpd_data.doses[conc][frame_num-1, run_num]
                     df.loc[counter] = pd.Series({columns[0]: dose_value,
                                                  columns[1]: frame_num,
                                                  columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
