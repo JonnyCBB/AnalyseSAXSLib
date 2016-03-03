@@ -10,6 +10,7 @@ import math
 import os
 from CorMapAnalysis import ScatterAnalysis
 import matplotlib.pyplot as plt
+from Raddose3D import Raddose3d
 
 
 class Compound(object):
@@ -38,6 +39,10 @@ class Compound(object):
     FLUX_ADD_FAC = 3.25993
 
     PLOT_NUM = 0  # Keep count of number of plots
+
+    EXP_PER_FRAME = 1  # Exposure time per frame
+
+    MGY_TO_KGY = 1000  # Factor to convert MGy to kGy
 
     # Dictionary allowing user to define various names for the radioprotectant
     # compounds. This is in case they don't know the symbol used for the
@@ -121,7 +126,7 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            self.diode_readings, self.doses = self.get_doses()
+            self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -427,7 +432,7 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
                 merging_thresholds[conc] = frames
         return merging_thresholds
 
-    def get_doses(self, use_frame_nums=False):
+    def get_doses(self, use_frame_nums=False, dose_met="DWD"):
         """Parse the BsxCuBE log file to get the diode readings and then
         calculate the dose for each frame from the diode readings by running
         RADDOSE-3D.
@@ -436,19 +441,18 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
             return (np.zeros(self.NUM_FRAMES),
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
         else:
-            # #################################################################
-            # NEED TO SORT THIS METHOD OUT
-            # #################################################################
             diode_readings = self.parse_bsxcube()
 
-            # Convert diode readings to flux
-            flux_readings = {}
-            for conc, readings in diode_readings.iteritems():
-                flux_readings[conc] = self.diode_to_flux(readings)
-
+            # Convert diode readings to flux and then calculate the dose by
+            # running RADDOSE-3D
             doses = {}
             for conc, readings in diode_readings.iteritems():
-                doses[conc] = 1e6 * readings
+                dose_values = np.zeros([self.NUM_FRAMES, readings.shape[1]])
+                for run in xrange(0, readings.shape[1]):
+                    raddose_obj = Raddose3d(self.diode_to_flux(readings)[:, run],
+                                            self.EXP_PER_FRAME, dose_met)
+                    dose_values[:, run] = raddose_obj.dose_vals
+                doses[conc] = self.MGY_TO_KGY * dose_values
 
             return (diode_readings, doses)
 
