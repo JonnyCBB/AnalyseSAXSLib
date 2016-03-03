@@ -34,9 +34,9 @@ class Compound(object):
     PROTEIN_SAMPLE = "GI"  # File prefix used for data (Glucose Isomerase)
 
     # Scale factor to convert diodes readings to flux
-    FLUX_SCALE_FAC = 2719400000000000
+    FLUX_SCALE_FAC = 2722950000000000
 
-    FLUX_ADD_FAC = 3.25993
+    FLUX_ADD_FAC = 5.72293
 
     PLOT_NUM = 0  # Keep count of number of plots
 
@@ -145,9 +145,7 @@ class Compound(object):
             self.scat_analysis = self.get_data_analysis_objs(dose_metric,
                                                              dose_units)
 
-            self.merge_thresholds = self.get_merging_thresholds(num_consec_frames,
-                                                                frame_comp,
-                                                                P_threshold)
+            self.merge_thresholds, self.adjP_123_correlate = self.get_merging_thresholds(num_consec_frames, frame_comp, P_threshold)
 
         else:
             print '************************* ERROR **************************'
@@ -421,6 +419,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         corresponding frames numbers of the merging threshold for each run.
         """
         merging_thresholds = {}
+        adjP_123_correlate = {}
         for conc, conc_analysis in self.scat_analysis.iteritems():
             frames = list(range(3))
             for j, run in enumerate(conc_analysis):
@@ -429,18 +428,18 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 adjP_1_3 = run.get_pw_data(1, 3, "adj P(>C)")
                 adjP_2_3 = run.get_pw_data(2, 3, "adj P(>C)")
                 if adjP_1_2 != 1.0 or adjP_1_3 != 1.0 or adjP_2_3 != 1.0:
-                    print '******************** WARNING *********************'
-                    print 'FIRST THREE FRAMES DO NOT CORRELATE'
-                    print """Check frames for compound: {}, concentration: {},
-and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferred_name"]],
-                             conc, j + 1)
+                    correlation = False
+                else:
+                    correlation = True
                 # Find frame at which we believe extensive damage has occured.
                 frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
             if self.name == "no_protection":
                 merging_thresholds[0] = frames
+                adjP_123_correlate[0] = correlation
             else:
                 merging_thresholds[conc] = frames
-        return merging_thresholds
+                adjP_123_correlate[conc] = correlation
+        return merging_thresholds, adjP_123_correlate
 
     def get_doses(self, use_frame_nums=False, dose_met="DWD"):
         """Parse the BsxCuBE log file to get the diode readings and then
