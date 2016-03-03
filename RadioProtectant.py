@@ -101,7 +101,7 @@ class Compound(object):
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
                  P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
-                 diode_dir="Diode_Readings"):
+                 diode_dir="Diode_Readings", overwrite_doses=False):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -127,8 +127,16 @@ class Compound(object):
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-            self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
-            self.save_doses_and_diode_to_csv(dose_dir, diode_dir)
+            # Only go through the long process of calculating the doses and
+            # extracting the diode readings if the user actually specifies that
+            # they want to overwrite the data or no data does not already exist
+            if (overwrite_doses or not
+                os.path.exists("../{}/{}".format(dose_dir, self.name)) or not
+                    os.path.exists("../{}/{}".format(diode_dir, self.name))):
+                self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
+                self.save_doses_and_diode_to_csv(dose_dir, diode_dir)
+            else:
+                self.diode_readings, self.doses = self.get_saved_doses_and_diode(dose_dir, diode_dir)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -476,6 +484,23 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
         for conc, diode_array in self.diode_readings.iteritems():
             diode_file_name = "{}/doses_conc_{}.csv".format(diode_file_dir, conc)
             np.savetxt(diode_file_name, diode_array, delimiter=",")
+
+    def get_saved_doses_and_diode(self, dose_dir, diode_dir):
+        """Get the saved doses and diode values
+        """
+        dose_file_dir = "../{}/{}".format(dose_dir, self.name)
+        doses = {}
+        for f in os.listdir(dose_file_dir):
+            conc = float(f.split("_")[-1].split(".")[0])
+            doses[conc] = np.genfromtxt(f, delimiter=',')
+
+        diode_file_dir = "../{}/{}".format(diode_dir, self.name)
+        diode_readings = {}
+        for f in os.listdir(diode_file_dir):
+            conc = float(f.split("_")[-1].split(".")[0])
+            diode_readings[conc] = np.genfromtxt(f, delimiter=',')
+
+        return (diode_readings, doses)
 
     def diode_to_flux(self, diode_readings):
         """Method to convert from diode reading to flux readings
