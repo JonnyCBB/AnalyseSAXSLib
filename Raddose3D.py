@@ -3,6 +3,7 @@ input files, running RADDOSE-3D and parsing the output.
 from
 """
 import subprocess
+import numpy as np
 
 
 class Raddose3d(object):
@@ -12,6 +13,20 @@ class Raddose3d(object):
     RADDOSE3D_OUTPUT_FILES = ["output-DoseState.csv", "output-DoseState.R",
                               "output-Summary.csv", "output-DoseState.txt"]
     RADDOSE3D_SUMMARY_CSV = "output-Summary.csv"
+
+    CSV_COLUMNS = {"DWD": 1,
+                   "Ela": 2,
+                   "Diff Eff": 3,
+                   "AD-WC": 4,
+                   "AD-Exp": 5,
+                   "Max": 6,
+                   "Dose Th": 7,
+                   "Abs En": 8,
+                   "TAD": 9,
+                   "Dose Con": 10,
+                   "Used Vol": 11,
+                   "Wedge Abs": 12,
+                   "Dose Ineff": 13}
     # ----------------------------------------------------------------------- #
     #                    RADDOSE-3D CONSTANT PARAMETERS                       #
     # ----------------------------------------------------------------------- #
@@ -39,9 +54,17 @@ class Raddose3d(object):
     # ----------------------------------------------------------------------- #
     #                         CONSTRUCTOR METHOD                              #
     # ----------------------------------------------------------------------- #
-    def __init__(self, flux_array, exposure_per_frame):
+    def __init__(self, flux_array, exposure_per_frame, dose_type="DWD"):
         self.write_raddose3d_input_file(flux_array, exposure_per_frame)
         self.run_raddose3d()
+        dose_vals = self.get_dwd_values(dose_type)
+        if len(dose_vals) != len(flux_array):
+            print '************************* ERROR **************************'
+            print "Length of the dose array: {} does not equal length of flux array: {}".format(len(dose_vals), len(flux_array))
+            print "This needs to be sorted."
+        self.dose_vals = np.divide(dose_vals.cumsum(),
+                                   np.linspace(1, len(dose_vals),
+                                               len(dose_vals)))
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -60,8 +83,14 @@ class Raddose3d(object):
     def run_raddose3d(self):
         """Run RADDOSE-3D
         """
-        terminalCommand = "java -jar {} -i {} -r raddose.exe".format(self.RADDOSE3D_EXE, self.RADDOSE3D_FILENAME)
+        terminalCommand = "java -jar {} -i {} -r raddose.exe".format(self.RADDOSE3D_EXE, self.RADDOSE3D_INPUT_FILENAME)
         subprocess.Popen(terminalCommand, stdout=subprocess.PIPE, shell=True)
+
+    def get_dwd_values(self, dose_type="DWD"):
+        """Extract DWD values from csv file
+        """
+        data = np.genfromtxt(self.RADDOSE3D_SUMMARY_CSV, delimiter=',')
+        return data[1:, self.CSV_COLUMNS[dose_type]]
 
     def writeCRYSTALBLOCK(self):
         """Method to write the crystal block for the RADDOSE-3D input file.
