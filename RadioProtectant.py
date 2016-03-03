@@ -100,7 +100,7 @@ class Compound(object):
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01, plot_dir="Plots"):
+                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses"):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -127,6 +127,7 @@ class Compound(object):
             #             DOSE VALUE CALCULATION WITH RADDOSE-3D              #
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
+            self.save_doses_to_csv(dose_dir)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -455,6 +456,17 @@ and run number: {}""".format(self.CMPD_INFO[self.name][self.LIST_INDEX["preferre
                 doses[conc] = self.MGY_TO_KGY * dose_values
 
             return (diode_readings, doses)
+
+    def save_doses_to_csv(self, dose_dir):
+        """Save doses to CSV files
+        """
+        dose_file_dir = "../{}/{}".format(dose_dir, self.name)
+        if os.path.exists(dose_file_dir):
+            os.makedirs(dose_file_dir)
+
+        for conc, dose_array in self.doses.iteritems():
+            dose_file_name = "{}/doses_conc_{}.csv".format(dose_file_dir, conc)
+            np.savetxt(dose_file_name, dose_array, delimiter=",")
 
     def diode_to_flux(self, diode_readings):
         """Method to convert from diode reading to flux readings

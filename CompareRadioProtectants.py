@@ -18,7 +18,7 @@ class ComparisonAnalysis(object):
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01, plot_dir="Plots",
+                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
                  rp_comp_dir="RP_Comparisons", plot_file_type="pdf"):
         # Return dictionary of Compound objects
         self.compounds = process_compounds(cmpd_list=compound_list,
@@ -33,7 +33,8 @@ class ComparisonAnalysis(object):
                                            num_consec_frames=num_consec_frames,
                                            frame_comp=frame_comp,
                                            P_threshold=P_threshold,
-                                           plot_dir=plot_dir)
+                                           plot_dir=plot_dir,
+                                           dose_dir=dose_dir)
         # Create a dataframe with compound information
         self.cmpd_df = self.create_compound_df(runs_per_conc)
 
@@ -117,7 +118,7 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                       crop_start=1, crop_end=-1, overwrite=True,
                       use_frames=False, dose_metric="DWD", dose_units="kGy",
                       num_consec_frames=3, frame_comp=1, P_threshold=0.01,
-                      plot_dir="Plots"):
+                      plot_dir="Plots", dose_dir="Doses"):
     """Create compound objects from the list of compounds and store them in a
     dictionary
     """
@@ -132,7 +133,8 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    dose_units=dose_units,
                                    num_consec_frames=num_consec_frames,
                                    frame_comp=frame_comp,
-                                   P_threshold=P_threshold, plot_dir=plot_dir)
+                                   P_threshold=P_threshold, plot_dir=plot_dir,
+                                   dose_dir=dose_dir)
     return cmpd_data
 
 
