@@ -6,6 +6,41 @@ from
 
 class Raddose3d(object):
 
+    # ----------------------------------------------------------------------- #
+    #                    RADDOSE-3D CONSTANT PARAMETERS                       #
+    # ----------------------------------------------------------------------- #
+    # CRYSTAL
+    CRYST_TYPE = "Cylinder"
+    DIMS = "1700 1000"
+    PPM = 0.05
+    COCAL = "SAXSseq"
+    SEQ_FILE = "4us6_GI.fasta"
+    PROT_CONC = 1.0
+    CONT_MAT = "Elemental"
+    MAT_EL = "Si 1 O 2"
+    CON_THICK = 50
+    CON_DENS = 2.648
+
+    # BEAM
+    BEAM_TYPE = "Gaussian"
+    FWHM = "500 500"
+    ENERGY = 12.1
+    COLLIMATION = "700 700"
+
+    # WEDGE
+    WEDGE = "0 0"
+
+    # ----------------------------------------------------------------------- #
+    #                         CONSTRUCTOR METHOD                              #
+    # ----------------------------------------------------------------------- #
+    def __init__(self, flux_array, exposure_per_frame):
+        self.write_raddose3d_input_file(flux_array, exposure_per_frame)
+
+    def write_raddose3d_input_file(self, flux_array, exposure_per_frame):
+        rd_file = open("raddose3d_input.txt", "w")
+        rd_file.write(self.writeCRYSTALBLOCK())
+        rd_file.close()
+
     def writeCRYSTALBLOCK(self):
     	raddose3dinputCRYSTALBLOCK = """
 ##############################################################################
@@ -13,65 +48,44 @@ class Raddose3d(object):
 ##############################################################################
 
 Crystal
+Type {}
+Dimensions {}
+PixelsPerMicron {}
+AbsCoefCalc {}
+ProteinConc {}
+ContainerMaterialType {}
+MaterialElements {}
+ContainerThickness {}
+ContainerDensity {}
 
-Type %s             # Cuboid or Spherical
-Dimensions %s %s %s # Dimensions of the crystal in X,Y,Z in um.
-                        # Z is the beam axis, Y the rotation axis and
-                        # X completes the right handed set
-                        #   (vertical if starting face-on).
-
-PixelsPerMicron %s     # This needs to be at least 10x the beam
-                        # FWHM for a Gaussian beam.
-                        # e.g. 20um FWHM beam -> 2um voxels -> 0.5 voxels/um
-
-AbsCoefCalc  %s       # Absorption Coefficients Calculated using
-                        # RADDOSE v2 (Paithankar et al. 2009)
-
-# Example case for insulin:
-UnitCell   78.02  78.02  78.02  # unit cell size: a, b, c
-                                # alpha, beta and gamma angles default to 90
-NumMonomers  24                 # number of monomers in unit cell
-NumResidues  51                 # number of residues per monomer
-ProteinHeavyAtoms Zn 2 S 6      # heavy atoms added to protein part of the
-                                # monomer, i.e. S, coordinated metals,
-                                # Se in Se-Met
-SolventHeavyConc P 425          # concentration of elements in the solvent
-                                # in mmol/l. Oxygen and lighter elements
-                                # should not be specified
-SolventFraction 0.64            # fraction of the unit cell occupied by solvent
-"""
+""".format(self.CRYST_TYPE, self.DIMS, self.PPM, self.COCAL, self.SEQ_FILE,
+           self.PROT_CONC, self.CONT_MAT, self.MAT_EL, self.CON_THICK,
+           self.CON_DENS)
         return raddose3dinputCRYSTALBLOCK
 
-    def writeBEAMBLOCK(self):
+    def writeBEAMBLOCK(self, flux):
     	raddose3dinputBEAMBLOCK = """
 ##############################################################################
 #                                  Beam Block                                #
 ##############################################################################
 
 Beam
+Type {}
+Flux
+FWHM {}
+Energy {}
+Collimation Rectangular {}
 
-Type %s             # can be Gaussian or TopHat
-Flux %s                 # in photons per second (2e12 = 2 * 10^12)
-FWHM %s %s                # in um, vertical by horizontal for a Gaussian beam
-Energy %s               # in keV
-
-Collimation Rectangular %s %s # Vertical/Horizontal collimation of the beam
-                                # For 'uncollimated' Gaussians, 3xFWHM
-                                # recommended
-"""
+""".format(self.BEAM_TYPE, flux, self.FWHM, self.ENERGY, self.COLLIMATION)
         return raddose3dinputBEAMBLOCK
 
-    def writeWEDGEBLOCK(self):
+    def writeWEDGEBLOCK(self, exposure_time):
     	raddose3dinputWEDGEBLOCK = """
 ##############################################################################
 #                                  Wedge Block                               #
 ##############################################################################
 
-Wedge %s %s                # Start and End rotational angle of the crystal
-                          # Start < End
-ExposureTime %s           # Total time for entire angular range
-
-# AngularResolution 2     # Only change from the defaults when using very
-                          # small wedges, e.g 5.
-"""
+Wedge {} {}
+ExposureTime {}
+""".format(self.WEDGE, exposure_time)
         return raddose3dinputWEDGEBLOCK
