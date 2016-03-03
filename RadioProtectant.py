@@ -379,12 +379,19 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 break
             else:
                 run_objs = []
-                for run_num in run_nums:
+                for j, run_num in enumerate(run_nums):
                     dat_file_prfx = self.get_1d_curve_filename_prefix(run_number=run_num,
                                                                       new_data_loc_prfx=self.CROPPED_DATA_LOC)
                     file_prefixes = "{}*.dat".format(dat_file_prfx)
-                    run_objs.append(ScatterAnalysis(file_prefixes, self.doses,
-                                                    metric, units))
+
+                    if self.name == "no_protection":
+                        run_objs.append(ScatterAnalysis(file_prefixes,
+                                                        self.doses[0],
+                                                        metric, units))
+                    else:
+                        run_objs.append(ScatterAnalysis(file_prefixes,
+                                                        self.doses[conc][:, j],
+                                                        metric, units))
                 if self.name == "no_protection":
                     scatter_objs[0] = run_objs
                 else:
@@ -429,10 +436,12 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             for conc, readings in diode_readings.iteritems():
                 flux_readings[conc] = (self.FLUX_ADD_FAC +
                                        self.FLUX_SCALE_FAC * readings)
-            ipdb.set_trace()  ######### Break Point ###########
 
-            return (diode_readings,
-                    np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
+            doses = {}
+            for conc, readings in diode_readings.iteritems():
+                doses[conc] = 1e6 * readings
+
+            return (diode_readings, doses)
 
     def parse_bsxcube(self):
         """Parse the BsxCuBE log file to get the diode readings
@@ -453,6 +462,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 conc = 0
                 if i == 1:
                     break
+            diode_dic[conc] = np.zeros([self.NUM_FRAMES, len(run_nums)])
             for j, run_num in enumerate(run_nums):
                 diode_vals, image_nums = [], []
                 for BsxCuBE_file in BsxCuBE_log_files:
@@ -468,7 +478,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
 
                 # ensure diode values ordered by image number
                 image_nums_sorted, diode_vals_sorted = (list(t) for t in zip(*sorted(zip(image_nums, diode_vals))))
-                diode_dic[conc] = np.array(diode_vals_sorted)
+                diode_dic[conc][:, j] = np.array(diode_vals_sorted)
 
                 # check that correct number of diode values parsed
                 if len(diode_vals_sorted) != self.NUM_FRAMES:
