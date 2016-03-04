@@ -508,7 +508,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         return self.FLUX_ADD_FAC + self.FLUX_SCALE_FAC * diode_readings
 
     def parse_bsxcube(self,find_rad_dam=True):
-        """Parse the BsxCuBE log file to get the diode readings and radiation damage onset information
+        """Parse the BsxCuBE log file to get the diode readings and radiation
+        damage onset information
         """
         # choose only BsxCuBE logs file for which compound present
         dat_file_prefix = self.CMPD_INFO[self.name][self.LIST_INDEX["dat_file_prefix"]]
@@ -531,7 +532,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             for j, run_num in enumerate(run_nums):
                 diode_vals, image_nums = [], []
                 found_raddam = False
-                for k,BsxCuBE_file in enumerate(BsxCuBE_log_files):
+                for k, BsxCuBE_file in enumerate(BsxCuBE_log_files):
                     log_open = open(BsxCuBE_file, 'r')
 
                     line_num = 0
@@ -545,28 +546,31 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                             diode_vals.append(float(l.split('diode:')[1].split(',')[0]))
                             image_nums.append(int(l.split('.edf')[0].split('_')[-1]))
 
-                        # search for raddam info for current run. Performed by finding a line 
-                        # reporting radiation damage, checking the previous line, and keeping 
-                        # raddam value if previous line corresponds to the required run number
+                        # search for raddam info for current run. Performed by
+                        # finding a line reporting radiation damage, checking
+                        # the previous line, and keeping raddam value if
+                        # previous line corresponds to the required run number
                         if find_rad_dam is True:
                             key_word = "WARNING: Radiation damage detected"
                             if key_word in l:
 
-                                # first line of first file cannot correspond to required run number
+                                # first line of first file cannot correspond to
+                                # required run number
                                 if k == 1 and line_num == 1:
                                     continue
 
                                 num_curves_merged = int(l.split('merged')[-1].split()[0])
                                 rad_dam_onset = num_curves_merged + 1
 
-                                key_words = ("CollectBrick","-log(Fidelity) between")
+                                key_words = ("CollectBrick",
+                                             "-log(Fidelity) between")
                                 if not all(x in prev_line for x in key_words):
                                     print 'ERROR! Unexpected line contents'
                                 dat_file = prev_line.split('and')[-1].split()[0] # get last .dat file of dataset
                                 correct_dat_format = '{}_{}{}_{}{}.dat'.format(dat_file_prefix,
-                                                                              '0'*(3-len(str(run_num))),
-                                                                              run_num,'0'*(5-len(str(self.NUM_FRAMES))),
-                                                                              self.NUM_FRAMES)
+                                                                               '0'*(3-len(str(run_num))),
+                                                                               run_num,'0'*(5-len(str(self.NUM_FRAMES))),
+                                                                               self.NUM_FRAMES)
                                 if correct_dat_format in dat_file:
                                     found_raddam = True
                                     break
@@ -574,8 +578,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     log_open.close()
                     if found_raddam:
                         break
-                
-                # check that correct number of diode values parsed 
+
+                # check that correct number of diode values parsed
                 # and ensure diode values ordered by image number
                 if len(diode_vals) != self.NUM_FRAMES:
                     print 'ERROR'
