@@ -74,15 +74,15 @@ class Compound(object):
     # Dictionary containing various information about each radioprotectant.
     # This includes the file prefixes used to find various files for each
     # radio protectant and the preferred name for each compound.
-    CMPD_INFO = {"no_protection": ["np", [29, 35], [14], "No Protection"],
-                 "Asc": ["Asc", [95, 110], [10, 9], "Ascorbate"],
-                 "DTT": ["DTT", [191, 206], [5, 4], "DTT"],
-                 "EtGly": ["EtGly", [79, 94], [11, 10], "Ethylene Glycol"],
-                 "Gly": ["Gly", [111, 126], [9, 8], "Glycerol"],
-                 "NO3_2": ["NO3", [159, 174], [7, 6], "Sodium Nitrate"],
-                 "Sucrose": ["Sucrose", [143, 158], [8, 7], "Sucrose"],
-                 "TEMPO": ["TEMPO", [127, 142], [8], "TEMPO"],
-                 "trehalose_2": ["th", [175, 190], [6, 5], "Trehalose"]}
+    CMPD_INFO = {"no_protection": ["np", [29, 35], [14], "No Protection", []],
+                 "Asc": ["Asc", [95, 110], [10, 9], "Ascorbate", ["Na"]],
+                 "DTT": ["DTT", [191, 206], [5, 4], "DTT", ["S"]],
+                 "EtGly": ["EtGly", [79, 94], [11, 10], "Ethylene Glycol", []],
+                 "Gly": ["Gly", [111, 126], [9, 8], "Glycerol", []],
+                 "NO3_2": ["NO3", [159, 174], [7, 6], "Sodium Nitrate", ["Na"]],
+                 "Sucrose": ["Sucrose", [143, 158], [8, 7], "Sucrose", []],
+                 "TEMPO": ["TEMPO", [127, 142], [8], "TEMPO", []],
+                 "trehalose_2": ["th", [175, 190], [6, 5], "Trehalose", []]}
 
     # Dictionary that gives the indices of the relevant information in the list
     # which is stored as the "value" in the CMPD_INFO dictionary variable
@@ -90,7 +90,8 @@ class Compound(object):
     LIST_INDEX = {"dat_file_prefix": 0,
                   "run_number_range": 1,
                   "bsxcube_log": 2,
-                  "preferred_name": 3}
+                  "preferred_name": 3,
+                  "heavy atoms": 4}
 
 
 # ----------------------------------------------------------------------- #
