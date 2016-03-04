@@ -101,7 +101,8 @@ class Compound(object):
                  overwrite=True, use_frames=False, dose_metric="DWD",
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
                  P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
-                 diode_dir="Diode_Readings", overwrite_doses=False):
+                 diode_dir="Diode_Readings", rd_onset_dir="RD_Onset",
+                 overwrite_doses=False):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #         MANIPULATE THE DATA - SUBTRACTION, CROPPING ETC.        #
@@ -132,11 +133,12 @@ class Compound(object):
             # they want to overwrite the data or no data does not already exist
             if (overwrite_doses or not
                 os.path.exists("../{}/{}".format(dose_dir, self.name)) or not
-                    os.path.exists("../{}/{}".format(diode_dir, self.name))):
-                self.diode_readings, self.doses = self.get_doses(dose_met=dose_metric)
+                    os.path.exists("../{}/{}".format(diode_dir, self.name)) or not
+                    os.path.exists("../{}/{}".format(rd_onset_dir, self.name))):
+                self.diode_readings, self.doses, self.raddam_onset = self.get_doses(dose_met=dose_metric)
                 self.save_doses_and_diode_to_csv(dose_dir, diode_dir)
             else:
-                self.diode_readings, self.doses = self.get_saved_doses_and_diode(dose_dir, diode_dir)
+                self.diode_readings, self.doses, self.raddam_onset = self.get_saved_doses_and_diode(dose_dir, diode_dir, rd_onset_dir)
 
             # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
             #                 CORRELATION ANALYSIS OF FRAMES                  #
@@ -451,7 +453,6 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
         else:
             diode_readings, raddam_onset = self.parse_bsxcube()
-            self.raddam_onset = raddam_onset
 
             # Convert diode readings to flux and then calculate the dose by
             # running RADDOSE-3D
@@ -464,10 +465,11 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     dose_values[:, run] = raddose_obj.dose_vals
                 doses[conc] = self.MGY_TO_KGY * dose_values
 
-            return (diode_readings, doses)
+            return (diode_readings, doses, raddam_onset)
 
-    def save_doses_and_diode_to_csv(self, dose_dir, diode_dir):
-        """Save doses to CSV files
+    def save_doses_and_diode_to_csv(self, dose_dir, diode_dir, rd_onset_dir):
+        """Save doses, diode readings and radiation damage onset values
+        to CSV files.
         """
         dose_file_dir = "../{}/{}".format(dose_dir, self.name)
         if not os.path.exists(dose_file_dir):
@@ -482,25 +484,44 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             os.makedirs(diode_file_dir)
 
         for conc, diode_array in self.diode_readings.iteritems():
-            diode_file_name = "{}/doses_conc_{}.csv".format(diode_file_dir, conc)
+            diode_file_name = "{}/doses_conc_{}.csv".format(diode_file_dir,
+                                                            conc)
             np.savetxt(diode_file_name, diode_array, delimiter=",")
 
-    def get_saved_doses_and_diode(self, dose_dir, diode_dir):
+        rd_onset_file_dir = "../{}/{}".format(rd_onset_dir, self.name)
+        if not os.path.exists(rd_onset_file_dir):
+            os.makedirs(rd_onset_file_dir)
+
+        for conc, onset_array in self.raddam_onset.iteritems():
+            onset_file_name = "{}/doses_conc_{}.csv".format(rd_onset_file_dir,
+                                                            conc)
+            np.savetxt(onset_file_name, onset_array, delimiter=",")
+
+    def get_saved_doses_and_diode(self, dose_dir, diode_dir, onset_dir):
         """Get the saved doses and diode values
         """
         dose_file_dir = "../{}/{}".format(dose_dir, self.name)
         doses = {}
         for f in os.listdir(dose_file_dir):
             conc = float(f.split("_")[-1].split(".")[0])
-            doses[conc] = np.genfromtxt("{}/{}".format(dose_file_dir, f), delimiter=',')
+            doses[conc] = np.genfromtxt("{}/{}".format(dose_file_dir, f),
+                                        delimiter=',')
 
         diode_file_dir = "../{}/{}".format(diode_dir, self.name)
         diode_readings = {}
         for f in os.listdir(diode_file_dir):
             conc = float(f.split("_")[-1].split(".")[0])
-            diode_readings[conc] = np.genfromtxt("{}/{}".format(diode_file_dir, f), delimiter=',')
+            diode_readings[conc] = np.genfromtxt("{}/{}".format(diode_file_dir, f),
+                                                 delimiter=',')
 
-        return (diode_readings, doses)
+        onset_file_dir = "../{}/{}".format(onset_dir, self.name)
+        rd_onset = {}
+        for f in os.listdir(onset_file_dir):
+            conc = float(f.split("_")[-1].split(".")[0])
+            rd_onset[conc] = np.genfromtxt("{}/{}".format(onset_file_dir, f),
+                                           delimiter=',')
+
+        return (diode_readings, doses, rd_onset)
 
     def diode_to_flux(self, diode_readings):
         """Method to convert from diode reading to flux readings

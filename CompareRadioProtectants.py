@@ -20,7 +20,8 @@ class ComparisonAnalysis(object):
                  dose_units="kGy", num_consec_frames=3, frame_comp=1,
                  P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
                  diode_dir="Diode_Readings", rp_comp_dir="RP_Comparisons",
-                 plot_file_type="pdf", overwrite_doses=False):
+                 plot_file_type="pdf", overwrite_doses=False,
+                 rd_onset_dir="RD_Onset"):
         # Return dictionary of Compound objects
         self.compounds = process_compounds(cmpd_list=compound_list,
                                            crop_start=crop_start,
@@ -37,7 +38,8 @@ class ComparisonAnalysis(object):
                                            plot_dir=plot_dir,
                                            dose_dir=dose_dir,
                                            diode_dir=diode_dir,
-                                           overwrite_doses=overwrite_doses)
+                                           overwrite_doses=overwrite_doses,
+                                           rd_onset_dir=rd_onset_dir)
         # Create a dataframe with compound information
         self.cmpd_df = self.create_compound_df(runs_per_conc)
 
@@ -122,7 +124,8 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                       use_frames=False, dose_metric="DWD", dose_units="kGy",
                       num_consec_frames=3, frame_comp=1, P_threshold=0.01,
                       plot_dir="Plots", dose_dir="Doses",
-                      diode_dir="Diode_Readings", overwrite_doses=False):
+                      diode_dir="Diode_Readings", overwrite_doses=False,
+                      rd_onset_dir="RD_Onset"):
     """Create compound objects from the list of compounds and store them in a
     dictionary
     """
@@ -139,7 +142,8 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    frame_comp=frame_comp,
                                    P_threshold=P_threshold, plot_dir=plot_dir,
                                    dose_dir=dose_dir, diode_dir=diode_dir,
-                                   overwrite_doses=overwrite_doses)
+                                   overwrite_doses=overwrite_doses,
+                                   rd_onset_dir=rd_onset_dir)
     return cmpd_data
 
 
