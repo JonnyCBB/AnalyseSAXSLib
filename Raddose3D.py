@@ -55,8 +55,11 @@ class Raddose3d(object):
     # ----------------------------------------------------------------------- #
     #                         CONSTRUCTOR METHOD                              #
     # ----------------------------------------------------------------------- #
-    def __init__(self, flux_array, exposure_per_frame, dose_type="DWD"):
-        self.write_raddose3d_input_file(flux_array, exposure_per_frame)
+    def __init__(self, flux_array, exposure_per_frame, concentration,
+                 dose_type="DWD", heavy_atom=[]):
+        self.write_raddose3d_input_file(flux_array, exposure_per_frame,
+                                        concentration, heavy_atom)
+
         self.run_raddose3d()
         self.dose_vals = self.get_dwd_values(dose_type)
         if len(self.dose_vals) != len(flux_array):
@@ -73,11 +76,12 @@ class Raddose3d(object):
     #                         INSTANCE METHODS                                #
     # ----------------------------------------------------------------------- #
 
-    def write_raddose3d_input_file(self, flux_array, exposure_per_frame):
+    def write_raddose3d_input_file(self, flux_array, exposure_per_frame,
+                                   concentration, heavy_atom):
         """Write a RADDOSE-3D input file for a SAXS run
         """
         rd_file = open(self.RADDOSE3D_INPUT_FILENAME, "w")
-        rd_file.write(self.writeCRYSTALBLOCK())
+        rd_file.write(self.writeCRYSTALBLOCK(concentration, heavy_atom))
         for i, flux in enumerate(flux_array):
             rd_file.write(self.writeBEAMBLOCK(flux, i+1))
             rd_file.write(self.writeWEDGEBLOCK(exposure_per_frame, i+1))
@@ -102,10 +106,10 @@ class Raddose3d(object):
         if os.path.isfile(self.RADDOSE3D_INPUT_FILENAME):
             os.remove(self.RADDOSE3D_INPUT_FILENAME)
 
-    def writeCRYSTALBLOCK(self):
+    def writeCRYSTALBLOCK(self, concentration, heavy_atom):
         """Method to write the crystal block for the RADDOSE-3D input file.
         """
-    	raddose3dinputCRYSTALBLOCK = """
+    	mainCrystalBlock = """
 ##############################################################################
 #                                 Crystal Block                              #
 ##############################################################################
@@ -121,11 +125,15 @@ ContainerMaterialType {}
 MaterialElements {}
 ContainerThickness {}
 ContainerDensity {}
-
 """.format(self.CRYST_TYPE, self.DIMS, self.PPM, self.COCAL, self.SEQ_FILE,
            self.PROT_CONC, self.CONT_MAT, self.MAT_EL, self.CON_THICK,
            self.CON_DENS)
-        return raddose3dinputCRYSTALBLOCK
+        if heavy_atom:
+            heavy_solv_contribution = """SolventHeavyConc {} {}
+        """.format(heavy_atom[0], concentration)
+        else:
+            heavy_solv_contribution = ""
+        return "{}{}".format(mainCrystalBlock, heavy_solv_contribution)
 
     def writeBEAMBLOCK(self, flux, block_num=""):
         """Method to write the beam block for the RADDOSE-3D input file.

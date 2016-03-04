@@ -91,7 +91,7 @@ class Compound(object):
                   "run_number_range": 1,
                   "bsxcube_log": 2,
                   "preferred_name": 3,
-                  "heavy atoms": 4}
+                  "heavy atom": 4}
 
 
 # ----------------------------------------------------------------------- #
@@ -463,7 +463,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 dose_values = np.zeros([self.NUM_FRAMES, readings.shape[1]])
                 for run in xrange(0, readings.shape[1]):
                     raddose_obj = Raddose3d(self.diode_to_flux(readings)[:, run],
-                                            self.EXP_PER_FRAME, dose_met)
+                                            self.EXP_PER_FRAME, conc, dose_met,
+                                            self.CMPD_INFO[self.name][self.LIST_INDEX["heavy atom"]])
                     dose_values[:, run] = raddose_obj.dose_vals
                 doses[conc] = self.MGY_TO_KGY * dose_values
 
