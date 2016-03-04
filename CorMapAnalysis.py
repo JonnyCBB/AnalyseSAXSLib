@@ -592,7 +592,20 @@ class ScatterAnalysis(object):
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                            PLOT CURVE                           #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        num_frames = self.I.shape[1]
+        diff_frames_list = np.zeros(num_frames)
+        frames = np.linspace(1, num_frames, num_frames)
+        for i in xrange(0, num_frames):
+            frame = i+1
+            diff_frames_list[i] = self.find_first_n_diff_frames(n=n, frame=frame, P_threshold=P_threshold, P_type=P_type)
 
+        plt.figure(self.PLOT_NUM)
+        plt.plot(frames, diff_frames_list)
+        plt.xlabel("Frame Number")
+        if n == 1:
+            plt.ylabel("First Dissimilar Frame")
+        else:
+            plt.ylabel("First of {} Consecutive Dissimilar Frames".format(n))
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
