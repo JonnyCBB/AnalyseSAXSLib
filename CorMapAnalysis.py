@@ -155,12 +155,12 @@ class ScatterAnalysis(object):
             print "User chose n = {}.".format(n)
             print "Please choose a positve integer value for n."
 
-    def similar_frames(self, frame=1, P_threshold=0.01):
+    def similar_frames(self, frame=1, P_threshold=0.01, P_type="adjP"):
         """Return list all of the frames that are similar as defined by the
         method presented in Daniel Franke, Cy M Jeffries & Dmitri I Svergun
         (2015).
         """
-        list_of_diff_frames = self.find_diff_frames(frame, P_threshold)
+        list_of_diff_frames = self.find_diff_frames(frame, P_threshold, P_type)
         return [i+1 for i in xrange(0, self.I.shape[1]) if i+1 not in list_of_diff_frames]
 
     def get_pw_data(self, frame1, frame2, datcmp_data_type="adj P(>C)"):
