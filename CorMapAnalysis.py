@@ -254,6 +254,8 @@ class ScatterAnalysis(object):
         #                          PLOT CORMAP                            #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         plt.figure(self.PLOT_NUM)
+        plt.gca().xaxis.grid(False)
+        plt.gca().yaxis.grid(False)
         cormap = plt.imshow(self.calc_cormap(), cmap=colour_scheme,
                             extent=[min_q, max_q, min_q, max_q])
         plt.xlabel(r'Scattering Vector, q (nm$^{-1}$)',
@@ -297,6 +299,8 @@ class ScatterAnalysis(object):
         #                     PLOT PAIRWISE CORMAP                        #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         plt.figure(self.PLOT_NUM)
+        plt.gca().xaxis.grid(False)
+        plt.gca().yaxis.grid(False)
         cormap = plt.imshow(self.calc_pwcormap(frame1=fr1, frame2=fr2),
                             cmap=colour_scheme,
                             extent=[min_q, max_q, min_q, max_q])
@@ -309,7 +313,7 @@ class ScatterAnalysis(object):
         C = self.get_pw_data(fr1, fr2, "C")
         if self.x_units:
             change_in_x = abs(self.x_axis[fr1-1] - self.x_axis[fr2-1])
-            plt.title(r'PW CorMap: frame {} vs {}. C = {}, adj P(>C) = {}, $\Delta${} = {} {}'.format(fr1, fr2, C, adjP, self.x_metric, change_in_x, self.x_units))
+            plt.title(r'PW CorMap: frame {} vs {}. C = {}, adj P(>C) = {}, $\Delta${} = {:.3f} {}'.format(fr1, fr2, C, adjP, self.x_metric, change_in_x, self.x_units))
         else:
             plt.title("Pairwise CorMap: frame {} vs {}. C = {}, adj P(>C) = {}".format(fr1, fr2, C, adjP))
 
@@ -485,7 +489,7 @@ class ScatterAnalysis(object):
             plt.show()
 
     # ----------------------------------------------------------------------- #
-    #                        PLOT 1D SCATTERING CURVE                         #
+    #                        PLOT 1D INTENSITY CURVE                          #
     # ----------------------------------------------------------------------- #
     def plot_1d_intensity(self, frames, start_point=1, end_point=-1,
                           log_intensity=False, display=True, save=False,
@@ -498,7 +502,7 @@ class ScatterAnalysis(object):
         self.PLOT_NUM += 1
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-        #                        PLOT SCATTER CURVE                       #
+        #                        PLOT INTENSITY CURVE                     #
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         if end_point == -1:
             end_point = len(self.q)
@@ -513,20 +517,20 @@ class ScatterAnalysis(object):
             for i in xrange(0, intensity.shape[1]):
                 if self.x_units:
                     plt.plot(reciprocal_resolution, intensity[:, i], 'o',
-                             label="Frame {}, {}={} {}".format(frames[i] + 1,
-                                                               self.x_metric,
-                                                               self.x_axis[frames[i]],
-                                                               self.x_units))
+                             label="Frame {}, {}={:.3f} {}".format(frames[i] + 1,
+                                                                   self.x_metric,
+                                                                   self.x_axis[frames[i]],
+                                                                   self.x_units))
                 else:
                     plt.plot(reciprocal_resolution, intensity[:, i], 'o',
                              label="Frame {}".format(frames[i] + 1))
         else:
             if self.x_units:
                 plt.plot(reciprocal_resolution, intensity, 'o',
-                         label="Frame {}, {}={} {}".format(frames,
-                                                           self.x_metric,
-                                                           self.x_axis[frames-1],
-                                                           self.x_units))
+                         label="Frame {}, {}={:.3f} {}".format(frames,
+                                                               self.x_metric,
+                                                               self.x_axis[frames-1],
+                                                               self.x_units))
             else:
                 plt.plot(reciprocal_resolution, intensity, 'o',
                          label="Frame {}".format(frames))
