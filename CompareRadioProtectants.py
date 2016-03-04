@@ -37,7 +37,7 @@ class ComparisonAnalysis(object):
                                            plot_dir=plot_dir,
                                            dose_dir=dose_dir,
                                            diode_dir=diode_dir,
-                                           overwrite_doses=False)
+                                           overwrite_doses=overwrite_doses)
         # Create a dataframe with compound information
         self.cmpd_df = self.create_compound_df(runs_per_conc)
 
