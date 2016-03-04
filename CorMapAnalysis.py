@@ -82,10 +82,18 @@ class ScatterAnalysis(object):
                                                                float(data[5])]
         return data_dict
 
-    def find_diff_frames(self, frame=1, P_threshold=0.01):
+    def find_diff_frames(self, frame=1, P_threshold=0.01, P_type="adjP"):
         """List all statistically different frames according to the method by
         Daniel Franke, Cy M Jeffries & Dmitri I Svergun (2015)
         """
+        if P_type == "adjP":
+            p_col = 2
+        elif P_type == "P":
+            p_col = 1
+        else:
+            print "********************** ERROR ***************************"
+            print "P_type '{}' Is not recognised".format(P_type)
+            print "P_type can only take the values 'adjP' (default) or 'P'."
         if frame <= self.I.shape[1]:
             diff_frames = []
             for i in xrange(0, self.I.shape[1]):
@@ -95,7 +103,7 @@ class ScatterAnalysis(object):
                     key = "{},{}".format(frame, i+1)
                 else:
                     continue
-                adjP = self.datcmp_data[key][2]
+                adjP = self.datcmp_data[key][p_col]
                 if adjP < P_threshold:
                     diff_frames.append(i+1)
             return diff_frames
@@ -104,12 +112,13 @@ class ScatterAnalysis(object):
             print "FRAME '{}' DOES NOT EXIST".format(frame)
             print "Use different frame numbers between 1 and {}".format(self.I.shape[1])
 
-    def find_first_n_diff_frames(self, n=1, frame=1, P_threshold=0.01):
+    def find_first_n_diff_frames(self, n=1, frame=1, P_threshold=0.01,
+                                 P_type="adjP"):
         """Return the first frame, F, where there are n consecutive frames
         after F that are also statistically different from the chosen frame.
         """
         # Get list frames that are different
-        list_of_diff_frames = self.find_diff_frames(frame, P_threshold)
+        list_of_diff_frames = self.find_diff_frames(frame, P_threshold, P_type)
         if n == 1:
             # If only looking for one frame then return the first value in
             # list of different frames.
@@ -545,6 +554,44 @@ class ScatterAnalysis(object):
             plt.ylabel('Intensity (arb. units.)', fontdict=self.PLOT_LABEL)
         plt.title('1D Scattering Curve', fontdict=self.PLOT_LABEL)
         plt.legend(loc=legend_loc, scatterpoints=1)
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            plt.show()
+
+    # ----------------------------------------------------------------------- #
+    #              PLOT FIRST N DIFFERENT FRAMES FOR EACH FRAME               #
+    # ----------------------------------------------------------------------- #
+    def plot_first_n_diff_frames(self, n=1, P_threshold=0.01,
+                                 P_type="adjP", display=True, save=False,
+                                 filename="", directory=""):
+        """For each frame in the dataset you can calculate the frame for which
+        for n-1 consecutive frames P(>C) or adj P(>C) is below P_threshold
+        where n and P_threshold are user defined values.
+
+        This methods plots this value for each frame in the dataset.
+        """
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                          SET PLOT PARAMS                        #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        self.PLOT_NUM += 1
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                            PLOT CURVE                           #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
