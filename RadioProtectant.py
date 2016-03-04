@@ -136,7 +136,8 @@ class Compound(object):
                     os.path.exists("../{}/{}".format(diode_dir, self.name)) or not
                     os.path.exists("../{}/{}".format(rd_onset_dir, self.name))):
                 self.diode_readings, self.doses, self.raddam_onset = self.get_doses(dose_met=dose_metric)
-                self.save_doses_and_diode_to_csv(dose_dir, diode_dir)
+                self.save_doses_and_diode_to_csv(dose_dir, diode_dir,
+                                                 rd_onset_dir)
             else:
                 self.diode_readings, self.doses, self.raddam_onset = self.get_saved_doses_and_diode(dose_dir, diode_dir, rd_onset_dir)
 
