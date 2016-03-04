@@ -487,7 +487,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             os.makedirs(diode_file_dir)
 
         for conc, diode_array in self.diode_readings.iteritems():
-            diode_file_name = "{}/doses_conc_{}.csv".format(diode_file_dir,
+            diode_file_name = "{}/diode_conc_{}.csv".format(diode_file_dir,
                                                             conc)
             np.savetxt(diode_file_name, diode_array, delimiter=",")
 
@@ -496,8 +496,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             os.makedirs(rd_onset_file_dir)
 
         for conc, onset_array in self.raddam_onset.iteritems():
-            onset_file_name = "{}/doses_conc_{}.csv".format(rd_onset_file_dir,
-                                                            conc)
+            onset_file_name = "{}/rdonset_conc_{}.csv".format(rd_onset_file_dir,
+                                                             conc)
             np.savetxt(onset_file_name, onset_array, delimiter=",")
 
     def get_saved_doses_and_diode(self, dose_dir, diode_dir, onset_dir):
