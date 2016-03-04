@@ -450,7 +450,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             return (np.zeros(self.NUM_FRAMES),
                     np.linspace(1, self.NUM_FRAMES, self.NUM_FRAMES))
         else:
-            diode_readings,raddam_onset = self.parse_bsxcube()
+            diode_readings, raddam_onset = self.parse_bsxcube()
             self.raddam_onset = raddam_onset
 
             # Convert diode readings to flux and then calculate the dose by
@@ -591,7 +591,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                 elif find_rad_dam:
                     print 'WARNING! No radiation damage limit found for current run'
 
-        return diode_dic,rad_dam_dic
+        return diode_dic, rad_dam_dic
 
     def plot_diode_readings(self, concentration, run_number, plot_flux=True,
                             display=True, save=False, filename="",
