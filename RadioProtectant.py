@@ -401,7 +401,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
 
                     if self.name == "no_protection":
                         run_objs.append(ScatterAnalysis(file_prefixes,
-                                                        self.doses[0],
+                                                        self.doses[0][:, j],
                                                         metric, units))
                     else:
                         run_objs.append(ScatterAnalysis(file_prefixes,
