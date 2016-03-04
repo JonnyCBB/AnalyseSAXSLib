@@ -528,7 +528,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         """
         return self.FLUX_ADD_FAC + self.FLUX_SCALE_FAC * diode_readings
 
-    def parse_bsxcube(self,find_rad_dam=True):
+    def parse_bsxcube(self, find_rad_dam=True):
         """Parse the BsxCuBE log file to get the diode readings and radiation
         damage onset information
         """
@@ -557,6 +557,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     log_open = open(BsxCuBE_file, 'r')
 
                     line_num = 0
+                    prev_line = ""
                     for l in log_open.readlines():
                         line_num += 1
                         # seach for diode information
@@ -587,10 +588,10 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                              "-log(Fidelity) between")
                                 if not all(x in prev_line for x in key_words):
                                     print 'ERROR! Unexpected line contents'
-                                dat_file = prev_line.split('and')[-1].split()[0] # get last .dat file of dataset
+                                dat_file = prev_line.split('and')[-1].split()[0]  # get last .dat file of dataset
                                 correct_dat_format = '{}_{}{}_{}{}.dat'.format(dat_file_prefix,
                                                                                '0'*(3-len(str(run_num))),
-                                                                               run_num,'0'*(5-len(str(self.NUM_FRAMES))),
+                                                                               run_num, '0'*(5-len(str(self.NUM_FRAMES))),
                                                                                self.NUM_FRAMES)
                                 if correct_dat_format in dat_file:
                                     found_raddam = True
