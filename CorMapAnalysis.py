@@ -493,7 +493,8 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     def plot_1d_intensity(self, frames, start_point=1, end_point=-1,
                           log_intensity=False, display=True, save=False,
-                          filename="", directory="", legend_loc="upper right"):
+                          filename="", directory="", legend_loc="upper right",
+                          markersize=8):
         """Plot 1d scatter curves
         """
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -517,6 +518,8 @@ class ScatterAnalysis(object):
             for i in xrange(0, intensity.shape[1]):
                 if self.x_units:
                     plt.plot(reciprocal_resolution, intensity[:, i], 'o',
+                             markersize=markersize, markeredgecolor='#ffffff',
+                             markeredgewidth=0.15,
                              label="Frame {}, {}={:.3f} {}".format(frames[i] + 1,
                                                                    self.x_metric,
                                                                    self.x_axis[frames[i]],
