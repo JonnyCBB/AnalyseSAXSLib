@@ -387,7 +387,7 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     def plot_scatter(self, frame=1, P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
-                     legend_loc="upper left", x_change=False):
+                     legend_loc="upper left", x_change=False, use_adjP=True):
         """Scatter plot of the C values for a chosen frame against all other
         frames.
         """
@@ -409,23 +409,31 @@ class ScatterAnalysis(object):
         pwframe_data = np.delete(pwframe_data, (frame-1), axis=0)
 
         colours = ["#0072B2", "#009E73", "#D55E00"]
-        lb_dict = {0: [colours[0], "adj P(>C) == 1"],
-                   1: [colours[1], "1 >= adj P(>C) >= {}".format(P_threshold)],
-                   2: [colours[2], "adj P(>C) < {}".format(P_threshold)]}
+        if use_adjP:
+            lb_dict = {0: [colours[0], "adj P(>C) == 1"],
+                       1: [colours[1], "1 >= adj P(>C) >= {}".format(P_threshold)],
+                       2: [colours[2], "adj P(>C) < {}".format(P_threshold)]}
+            P_col = 3
+        else:
+            lb_dict = {0: [colours[0], "P(>C) == 1"],
+                       1: [colours[1], "1 >= P(>C) >= {}".format(P_threshold)],
+                       2: [colours[2], "P(>C) < {}".format(P_threshold)]}
+            P_col = 2
+
 
         plt.figure(self.PLOT_NUM)
-        good_points = pwframe_data[pwframe_data[:, 3] == 1]
+        good_points = pwframe_data[pwframe_data[:, P_col] == 1]
         plt.scatter(good_points[:, 0], good_points[:, 1], color=lb_dict[0][0],
                     s=markersize, edgecolors='#ffffff', alpha=1,
                     label=lb_dict[0][1])
 
-        ok_points = pwframe_data[1 > pwframe_data[:, 3]]
-        ok_points = ok_points[ok_points[:, 3] >= P_threshold]
+        ok_points = pwframe_data[1 > pwframe_data[:, P_col]]
+        ok_points = ok_points[ok_points[:, P_col] >= P_threshold]
         plt.scatter(ok_points[:, 0], ok_points[:, 1], color=lb_dict[1][0],
                     s=markersize, edgecolors='#ffffff', alpha=1,
                     label=lb_dict[1][1])
 
-        bad_points = pwframe_data[pwframe_data[:, 3] < P_threshold]
+        bad_points = pwframe_data[pwframe_data[:, P_col] < P_threshold]
         plt.scatter(bad_points[:, 0], bad_points[:, 1], color=lb_dict[2][0],
                     s=markersize, edgecolors='#ffffff', alpha=1,
                     label=lb_dict[2][1])
