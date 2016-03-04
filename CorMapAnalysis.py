@@ -387,7 +387,8 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     def plot_scatter(self, frame=1, P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
-                     legend_loc="upper left", x_change=False, use_adjP=True):
+                     legend_loc="upper left", x_change=False, use_adjP=True,
+                     xaxis_frame_num=False):
         """Scatter plot of the C values for a chosen frame against all other
         frames.
         """
@@ -401,11 +402,17 @@ class ScatterAnalysis(object):
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         pwframe_data = self.get_pw_data_array(frame=frame,
                                               delete_zero_row=False)
-        if x_change:
-            sub = self.x_axis[frame - 1]
-            pwframe_data = np.column_stack([abs(self.x_axis - sub), pwframe_data])
+
+        if xaxis_frame_num:
+            x_axis = np.linspace(1, self.I.shape[1], self.I.shape[1])
         else:
-            pwframe_data = np.column_stack([self.x_axis, pwframe_data])
+            x_axis = self.x_axis
+
+        if x_change:
+            sub = x_axis[frame - 1]
+            pwframe_data = np.column_stack([abs(x_axis - sub), pwframe_data])
+        else:
+            pwframe_data = np.column_stack([x_axis, pwframe_data])
         pwframe_data = np.delete(pwframe_data, (frame-1), axis=0)
 
         colours = ["#0072B2", "#009E73", "#D55E00"]
@@ -454,7 +461,11 @@ class ScatterAnalysis(object):
                 plt.xlabel("{}".format(self.x_metric),
                            fontdict=self.PLOT_LABEL)
         plt.ylabel(r'C', fontdict=self.PLOT_LABEL)
-        plt.title("C values against frame number for frame {}".format(frame))
+        if xaxis_frame_num:
+            plt.title("C values against frame number for frame {}".format(frame))
+        else:
+            plt.title("C values against {} for frame {}".format(self.x_metric,
+                                                                frame))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
