@@ -83,14 +83,14 @@ class ComparisonAnalysis(object):
                                                 columns[1]: frame_num_cormap,
                                                 columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
                                                 columns[3]: conc,
-                                                columns[4]: run_num,
+                                                columns[4]: run_num + 1,
                                                 columns[5]: "CorMap"})
                     counter += 1
                     df.loc[counter] = pd.Series({columns[0]: dose_value_bsxcube,
                                                  columns[1]: frame_num_bsxcube,
                                                  columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
                                                  columns[3]: conc,
-                                                 columns[4]: run_num,
+                                                 columns[4]: run_num + 1,
                                                  columns[5]: "BsxCuBE"})
                     counter += 1
         return df
