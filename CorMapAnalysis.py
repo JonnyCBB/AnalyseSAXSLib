@@ -497,7 +497,7 @@ class ScatterAnalysis(object):
         if display:
             plt.show()
 
-    return (good_points,ok_points,bad_points)
+            return (good_points,ok_points,bad_points)
 
     # NOT FINISHED YET - DO NOT RUN (!!), IT WILL PRINT OUT 120 SCATTER PLOTS!!!!
     def plot_heatmap(self,num_frames=120,P_threshold=0.01, markersize=60,
