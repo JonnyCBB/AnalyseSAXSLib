@@ -2,10 +2,10 @@
 """
 from CompareRadioProtectants import ComparisonAnalysis
 
-# compounds = ["np", "dtt", "suc", "tempo", "tre", "no3", "asc", "gly", "etgly"]
+# compounds = ["np", "asc", "dtt", "suc", "tempo", "tre", "no3", "gly", "etgly"]
 compounds = ["np", "asc"]
 a = ComparisonAnalysis(compound_list=compounds, crop_start=25, crop_end=700,
-                       overwrite=False)
+                       overwrite=False, overwrite_doses=False)
 
 for cmpd in a.compounds.itervalues():
     for j, conc in enumerate(cmpd.CMPD_CONC):
