@@ -1,3 +1,4 @@
+import ipdb
 """ Class dealing with all of the analysis of the multiple compounds used in
 the SAXS analysis experiments
 """
@@ -44,9 +45,9 @@ class ComparisonAnalysis(object):
         self.cmpd_df = self.create_compound_df(runs_per_conc)
 
         # Create comparison plots
-        self.concentration_dependence_plots(plot_dir, plot_file_type)
-        self.radioprotectant_comparison_plot(plot_dir, rp_comp_dir,
-                                             plot_file_type)
+        # self.concentration_dependence_plots(plot_dir, plot_file_type)
+        # self.radioprotectant_comparison_plot(plot_dir, rp_comp_dir,
+        #                                      plot_file_type)
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -59,24 +60,38 @@ class ComparisonAnalysis(object):
         num_df_rows = (len(Compound.CMPD_CONC) * num_runs_per_conc *
                        len(self.compounds))
         index = list(range(num_df_rows))
-        columns = ['Dose (kGy)', 'Frame Number', 'Compound',
-                   'Concentration (mM)', 'Run Number']
+        columns = ['Dose (kGy)', 'RD Onset Frame', 'Compound',
+                   'Concentration (mM)', 'Run Number', 'RD Metric']
         df = pd.DataFrame(columns=columns, index=index)
         counter = 0
         for cmpd_data in self.compounds.itervalues():
             for conc in Compound.CMPD_CONC:
                 for run_num in xrange(0, num_runs_per_conc):
                     if cmpd_data.name == "no_protection":
-                        frame_num = cmpd_data.merge_thresholds[0][run_num]
-                        dose_value = cmpd_data.doses[0][frame_num-1, run_num]
+                        frame_num_cormap = cmpd_data.merge_thresholds[0][run_num]
+                        dose_value_cormap = cmpd_data.doses[0][frame_num_cormap-1, run_num]
+
+                        frame_num_bsxcube = cmpd_data.raddam_onset[0][run_num]
+                        dose_value_bsxcube = cmpd_data.doses[0][frame_num_bsxcube-1, run_num]
                     else:
-                        frame_num = cmpd_data.merge_thresholds[conc][run_num]
-                        dose_value = cmpd_data.doses[conc][frame_num-1, run_num]
-                    df.loc[counter] = pd.Series({columns[0]: dose_value,
-                                                 columns[1]: frame_num,
+                        frame_num_cormap = cmpd_data.merge_thresholds[conc][run_num]
+                        dose_value_cormap = cmpd_data.doses[conc][frame_num_cormap-1, run_num]
+
+                        frame_num_bsxcube = cmpd_data.raddam_onset[conc][run_num]
+                        dose_value_bsxcube = cmpd_data.doses[conc][frame_num_bsxcube-1, run_num]
+                    df.loc[counter] = pd.Series({columns[0]: dose_value_cormap,
+                                                columns[1]: frame_num_cormap,
+                                                columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
+                                                columns[3]: conc,
+                                                columns[4]: run_num,
+                                                columns[5]: "CorMap"})
+                    counter += 1
+                    df.loc[counter] = pd.Series({columns[0]: dose_value_bsxcube,
+                                                 columns[1]: frame_num_bsxcube,
                                                  columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
                                                  columns[3]: conc,
-                                                 columns[4]: run_num})
+                                                 columns[4]: run_num,
+                                                 columns[5]: "BsxCuBE"})
                     counter += 1
         return df
 
@@ -87,10 +102,9 @@ class ComparisonAnalysis(object):
         for cmpd_data in self.compounds.itervalues():
             cmpd_name = cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]]
             chart, ax = plt.subplots()
-            sns_plot = sns.boxplot(x="Concentration (mM)",
-                                   y="Dose (kGy)",
+            sns_plot = sns.boxplot(x="Concentration (mM)", y="Dose (kGy)",
                                    data=self.cmpd_df[self.cmpd_df["Compound"] == cmpd_name],
-                                   ax=ax)
+                                   ax=ax, hue="RD Metric", palette="PRGn")
             sns_plot.set_title("{}".format(cmpd_name))
             make_data_dirs(plot_dir)
             file_loc = "../{}/{}.{}".format(plot_dir, cmpd_name, file_type)
@@ -104,7 +118,8 @@ class ComparisonAnalysis(object):
         for conc in Compound.CMPD_CONC:
             chart, ax = plt.subplots()
             sns_plot = sns.boxplot(x="Compound", y="Dose (kGy)", ax=ax,
-                                   data=self.cmpd_df[self.cmpd_df["Concentration (mM)"] == conc])
+                                   data=self.cmpd_df[self.cmpd_df["Concentration (mM)"] == conc],
+                                   hue="RD Metric", palette="PRGn")
             sns_plot.set_title("Concentration = {} (mM)".format(conc))
             make_data_dirs(plot_dir, comp_dir)
             file_loc = "../{}/{}/Concentration_{}.{}".format(plot_dir,
