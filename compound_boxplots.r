@@ -19,10 +19,11 @@ for (conc in c(1, 2, 5, 10)){
     plt <- ggplot(df[df$concentration == conc &
         df$numfr_consec == std_num_frames & df$p_thr == std_P_thr,],
         aes(compound, dose))
-    plot_title <- sprintf("concentration = %d mM", conc)
+    plot_title <- sprintf("Concentration = %d mM", conc)
     plt + ggtitle(plot_title) + geom_boxplot(aes(fill = rd_metric)) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        labs(y="Dose (kGy)")
+        labs(x="Compound", y="Dose (kGy)") +
+        scale_fill_discrete(name="Radiation\nDamage\nMetric")
     plot_filename <- sprintf("../Plots/RP_Comparisons/Conc_%d_dose.pdf", conc)
     ggsave(plot_filename)
 }
@@ -36,7 +37,8 @@ for (conc in c(1, 2, 5, 10)){
     plot_title <- sprintf("Concentration = %d mM", conc)
     plt + ggtitle(plot_title) + geom_boxplot(aes(fill = rd_metric)) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        labs(y="Dose (kGy)")
+        labs(x="Compound", y="Frame Number") +
+        scale_fill_discrete(name="Radiation\nDamage\nMetric")
     plot_filename <- sprintf("../Plots/RP_Comparisons/Conc_%d_frame_num.pdf",
     conc)
     ggsave(plot_filename)
@@ -50,7 +52,8 @@ for (cmpd in c("Sucrose", "Trehalose", "TEMPO", "Ascorbate", "Glycerol",
         df$p_thr == std_P_thr,], aes(factor(concentration), dose))
     plot_title <- sprintf("%s", cmpd)
     plt + ggtitle(plot_title) + geom_boxplot(aes(fill = rd_metric)) +
-    labs(x="Concentration (mM)", y="Dose (kGy)")
+    labs(x="Concentration (mM)", y="Dose (kGy)") +
+    scale_fill_discrete(name="Radiation\nDamage\nMetric")
     plot_filename <- sprintf("../Plots/%s/%s_conc_comp.pdf", cmpd, cmpd)
     ggsave(plot_filename)
 
@@ -64,7 +67,8 @@ for (cmpd in c("Sucrose", "Trehalose", "TEMPO", "Ascorbate", "Glycerol",
     plt + ggtitle(plot_title) +
     geom_boxplot(aes(fill = factor(concentration))) +
     labs(x="Consecutive frames for radiation damage onset threshold",
-    y="Dose (kGy)")
+    y="Dose (kGy)") +
+    scale_fill_discrete(name="Concentration\n(mM)")
     plot_filename <- sprintf("../Plots/%s/%s_Num_consec_fr_comp.pdf",
     cmpd, cmpd)
     ggsave(plot_filename)
@@ -76,7 +80,8 @@ for (cmpd in c("Sucrose", "Trehalose", "TEMPO", "Ascorbate", "Glycerol",
     plot_title <- sprintf("%s", cmpd)
     plt + ggtitle(plot_title) +
     geom_boxplot(aes(fill = factor(concentration))) +
-    labs(x="P value threshold", y="Dose (kGy)")
+    labs(x="P value threshold", y="Dose (kGy)") +
+    scale_fill_discrete(name="Concentration\n(mM)")
     plot_filename <- sprintf("../Plots/%s/%s_PThresh_comp.pdf", cmpd, cmpd)
     ggsave(plot_filename)
 }
