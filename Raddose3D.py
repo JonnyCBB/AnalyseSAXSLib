@@ -12,7 +12,8 @@ class Raddose3d(object):
     RADDOSE3D_INPUT_FILENAME = "raddose3d_input.txt"
     RADDOSE3D_EXE = "raddose3d.jar"
     RADDOSE3D_OUTPUT_FILES = ["output-DoseState.csv", "output-DoseState.R",
-                              "output-Summary.csv", "output-DoseState.txt"]
+                              "output-Summary.csv", "output-DoseState.txt",
+                              "output-Summary.txt"]
     RADDOSE3D_SUMMARY_CSV = "output-Summary.csv"
 
     CSV_COLUMNS = {"DWD": 1,
