@@ -17,8 +17,8 @@ class ComparisonAnalysis(object):
     def __init__(self, compound_list, runs_per_conc=3, buffer_sub=True,
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
-                 dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
+                 dose_units="kGy", num_consec_frames=[3], frame_comp=1,
+                 P_threshold=[0.01], plot_dir="Plots", dose_dir="Doses",
                  diode_dir="Diode_Readings", rp_comp_dir="RP_Comparisons",
                  plot_file_type="pdf", overwrite_doses=False,
                  rd_onset_dir="RD_Onset"):
@@ -37,8 +37,11 @@ class ComparisonAnalysis(object):
                                            diode_dir=diode_dir,
                                            overwrite_doses=overwrite_doses,
                                            rd_onset_dir=rd_onset_dir)
+
         # Create a dataframe with compound information
-        self.cmpd_df = self.create_compound_df(runs_per_conc)
+        self.cmpd_df = self.create_compound_df(runs_per_conc,
+                                               num_consec_frames,
+                                               P_threshold)
 
         # Create comparison plots
         # self.concentration_dependence_plots(plot_dir, plot_file_type)
@@ -49,7 +52,8 @@ class ComparisonAnalysis(object):
     #                         INSTANCE METHODS                                #
     # ----------------------------------------------------------------------- #
 
-    def create_compound_df(self, num_runs_per_conc=3):
+    def create_compound_df(self, num_consec_frames=[3], P_threshold=[0.01],
+                           num_runs_per_conc=3):
         """Create a dataframe containing information about each compound's
         radioprotection ability.
         """
@@ -60,35 +64,38 @@ class ComparisonAnalysis(object):
                    'Concentration (mM)', 'Run Number', 'RD Metric']
         df = pd.DataFrame(columns=columns, index=index)
         counter = 0
-        for cmpd_data in self.compounds.itervalues():
+        for cmpd in self.compounds.itervalues():
+            warn_if_frames123_dont_correlate(cmpd, num_runs_per_conc)
             for conc in Compound.CMPD_CONC:
                 for run_num in xrange(0, num_runs_per_conc):
-                    if cmpd_data.name == "no_protection":
-                        frame_num_cormap = cmpd_data.raddam_onset_cormap[0][run_num]
-                        dose_value_cormap = cmpd_data.doses[0][frame_num_cormap-1, run_num]
+                    for n in num_consec_frames:
+                        for P in P_threshold:
+                            if cmpd.name == "no_protection":
+                                frame_num_cormap = cmpd.raddam_onset_cormap[0][run_num]
+                                dose_value_cormap = cmpd.doses[0][frame_num_cormap-1, run_num]
 
-                        frame_num_bsxcube = cmpd_data.raddam_onset[0][run_num]
-                        dose_value_bsxcube = cmpd_data.doses[0][frame_num_bsxcube-1, run_num]
-                    else:
-                        frame_num_cormap = cmpd_data.raddam_onset_cormap[conc][run_num]
-                        dose_value_cormap = cmpd_data.doses[conc][frame_num_cormap-1, run_num]
+                                frame_num_bsxcube = cmpd.raddam_onset[0][run_num]
+                                dose_value_bsxcube = cmpd.doses[0][frame_num_bsxcube-1, run_num]
+                            else:
+                                frame_num_cormap = cmpd.raddam_onset_cormap[conc][run_num]
+                                dose_value_cormap = cmpd.doses[conc][frame_num_cormap-1, run_num]
 
-                        frame_num_bsxcube = cmpd_data.raddam_onset[conc][run_num]
-                        dose_value_bsxcube = cmpd_data.doses[conc][frame_num_bsxcube-1, run_num]
-                    df.loc[counter] = pd.Series({columns[0]: dose_value_cormap,
-                                                columns[1]: frame_num_cormap,
-                                                columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
-                                                columns[3]: conc,
-                                                columns[4]: run_num + 1,
-                                                columns[5]: "CorMap"})
-                    counter += 1
-                    df.loc[counter] = pd.Series({columns[0]: dose_value_bsxcube,
-                                                 columns[1]: frame_num_bsxcube,
-                                                 columns[2]: cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]],
-                                                 columns[3]: conc,
-                                                 columns[4]: run_num + 1,
-                                                 columns[5]: "BsxCuBE"})
-                    counter += 1
+                                frame_num_bsxcube = cmpd.raddam_onset[conc][run_num]
+                                dose_value_bsxcube = cmpd.doses[conc][frame_num_bsxcube-1, run_num]
+                            df.loc[counter] = pd.Series({columns[0]: dose_value_cormap,
+                                                        columns[1]: frame_num_cormap,
+                                                        columns[2]: cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
+                                                        columns[3]: conc,
+                                                        columns[4]: run_num + 1,
+                                                        columns[5]: "CorMap"})
+                            counter += 1
+                            df.loc[counter] = pd.Series({columns[0]: dose_value_bsxcube,
+                                                         columns[1]: frame_num_bsxcube,
+                                                         columns[2]: cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
+                                                         columns[3]: conc,
+                                                         columns[4]: run_num + 1,
+                                                         columns[5]: "BsxCuBE"})
+                            counter += 1
         return df
 
     def concentration_dependence_plots(self, plot_dir, file_type):
@@ -152,6 +159,26 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    overwrite_doses=overwrite_doses,
                                    rd_onset_dir=rd_onset_dir)
     return cmpd_data
+
+
+def warn_if_frames123_dont_correlate(cmpd, num_runs_per_conc=3):
+    """Function to print Warning if the first 3 frames of a run don't correlate
+    with each other.
+    """
+    adjP_123_correlate_results = cmpd.check_frames_123_correlation()
+    for j, conc in enumerate(cmpd.CMPD_CONC):
+        if cmpd.name == "no_protection":
+            if j == 0:
+                conc = 0
+            else:
+                break
+        for run in xrange(0, num_runs_per_conc):
+            if not adjP_123_correlate_results[conc][run]:
+                print '******************** WARNING *********************'
+                print 'FIRST THREE FRAMES DO NOT CORRELATE'
+                print """Check frames for compound: {}, concentration: {},
+            and run number: {}""".format(cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
+                                         conc, j + 1)
 
 
 def make_data_dirs(top_level_dir, second_level_dir=""):
