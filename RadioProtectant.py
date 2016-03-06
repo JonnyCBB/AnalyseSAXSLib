@@ -651,6 +651,8 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             plt.ylabel("Flux (photons/sec)")
         else:
             plt.ylabel("Diode reading (cts/sec)")
+        plt.title("Concentration = {} mM, Run number= {}".format(concentration,
+                                                                 run_number))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
