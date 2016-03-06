@@ -47,10 +47,36 @@ for (conc in c(1, 2, 5, 10)){
 for (cmpd in c("Sucrose", "Trehalose", "TEMPO", "Ascorbate", "Glycerol",
                "Ethylene Glycol", "No Protection", "Sodium Nitrate", "DTT")){
     plt <- ggplot(df[df$compound == cmpd & df$numfr_consec == std_num_frames &
-        df$p_thr == std_P_thr,,], aes(factor(concentration), dose))
+        df$p_thr == std_P_thr,], aes(factor(concentration), dose))
     plot_title <- sprintf("%s", cmpd)
     plt + ggtitle(plot_title) + geom_boxplot(aes(fill = rd_metric)) +
     labs(x="Concentration (mM)", y="Dose (kGy)")
     plot_filename <- sprintf("../Plots/%s/%s_conc_comp.pdf", cmpd, cmpd)
+    ggsave(plot_filename)
+
+    # Plot dose against the number of consecutive frames required to be similar
+    # before radiation damage is considered to have rendered the dataset
+    # too damaged.
+    plt <- ggplot(df[df$compound == cmpd &
+        df$p_thr == std_P_thr & df$rd_metric == "CorMap",],
+        aes(factor(numfr_consec), dose))
+    plot_title <- sprintf("%s", cmpd)
+    plt + ggtitle(plot_title) +
+    geom_boxplot(aes(fill = factor(concentration))) +
+    labs(x="Consecutive frames for radiation damage onset threshold",
+    y="Dose (kGy)")
+    plot_filename <- sprintf("../Plots/%s/%s_Num_consec_fr_comp.pdf",
+    cmpd, cmpd)
+    ggsave(plot_filename)
+
+    # Plot dose against P values Threshold.
+    plt <- ggplot(df[df$compound == cmpd &
+        df$numfr_consec == std_num_frames & df$rd_metric == "CorMap",],
+        aes(factor(p_thr), dose))
+    plot_title <- sprintf("%s", cmpd)
+    plt + ggtitle(plot_title) +
+    geom_boxplot(aes(fill = factor(concentration))) +
+    labs(x="P value threshold", y="Dose (kGy)")
+    plot_filename <- sprintf("../Plots/%s/%s_PThresh_comp.pdf", cmpd, cmpd)
     ggsave(plot_filename)
 }
