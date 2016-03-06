@@ -100,8 +100,7 @@ class Compound(object):
     def __init__(self, compound_name, buffer_subtraction=True,
                  average_type="mean", crop_start=1, crop_end=-1,
                  overwrite=True, use_frames=False, dose_metric="DWD",
-                 dose_units="kGy", num_consec_frames=3, frame_comp=1,
-                 P_threshold=0.01, plot_dir="Plots", dose_dir="Doses",
+                 dose_units="kGy", plot_dir="Plots", dose_dir="Doses",
                  diode_dir="Diode_Readings", rd_onset_dir="RD_Onset",
                  overwrite_doses=False):
 
@@ -148,9 +147,6 @@ class Compound(object):
             # Create ScatterAnalysis object for each run
             self.scat_analysis = self.get_data_analysis_objs(dose_metric,
                                                              dose_units)
-
-            self.raddam_onset_cormap = self.get_raddam_onset_nums(num_consec_frames, frame_comp, P_threshold)
-            self.adjP_123_correlate = self.check_frames_123_correlation()
 
         else:
             print '************************* ERROR **************************'

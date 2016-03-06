@@ -1,4 +1,3 @@
-import ipdb
 """ Class dealing with all of the analysis of the multiple compounds used in
 the SAXS analysis experiments
 """
@@ -33,9 +32,6 @@ class ComparisonAnalysis(object):
                                            use_frames=use_frames,
                                            dose_metric=dose_metric,
                                            dose_units=dose_units,
-                                           num_consec_frames=num_consec_frames,
-                                           frame_comp=frame_comp,
-                                           P_threshold=P_threshold,
                                            plot_dir=plot_dir,
                                            dose_dir=dose_dir,
                                            diode_dir=diode_dir,
@@ -137,7 +133,6 @@ class ComparisonAnalysis(object):
 def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                       crop_start=1, crop_end=-1, overwrite=True,
                       use_frames=False, dose_metric="DWD", dose_units="kGy",
-                      num_consec_frames=3, frame_comp=1, P_threshold=0.01,
                       plot_dir="Plots", dose_dir="Doses",
                       diode_dir="Diode_Readings", overwrite_doses=False,
                       rd_onset_dir="RD_Onset"):
@@ -152,10 +147,7 @@ def process_compounds(cmpd_list, buffer_subtraction=True, average_type="mean",
                                    average_type=average_type,
                                    use_frames=use_frames,
                                    dose_metric=dose_metric,
-                                   dose_units=dose_units,
-                                   num_consec_frames=num_consec_frames,
-                                   frame_comp=frame_comp,
-                                   P_threshold=P_threshold, plot_dir=plot_dir,
+                                   dose_units=dose_units, plot_dir=plot_dir,
                                    dose_dir=dose_dir, diode_dir=diode_dir,
                                    overwrite_doses=overwrite_doses,
                                    rd_onset_dir=rd_onset_dir)
