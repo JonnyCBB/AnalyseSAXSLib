@@ -600,11 +600,13 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                                              "-log(Fidelity) between")
                                 if not all(x in prev_line for x in key_words):
                                     print 'ERROR! Unexpected line contents'
-                                dat_file = prev_line.split('and')[-1].split()[0]  # get last .dat file of dataset
-                                correct_dat_format = '{}_{}{}_{}{}.dat'.format(dat_file_prefix,
-                                                                               '0'*(3-len(str(run_num))),
-                                                                               run_num, '0'*(5-len(str(self.NUM_FRAMES))),
-                                                                               self.NUM_FRAMES)
+                                # get last .dat file of dataset
+                                dat_file = prev_line.split('and')[-1].split()[0]
+                                if '.dat' not in dat_file:
+                                    print 'ERROR'
+                                correct_dat_format = '{}_{}{}'.format(dat_file_prefix,
+                                                                      '0'*(3-len(str(run_num))),
+                                                                      run_num)
                                 if correct_dat_format in dat_file:
                                     found_raddam = True
                                     break
