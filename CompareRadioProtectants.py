@@ -39,9 +39,11 @@ class ComparisonAnalysis(object):
                                            rd_onset_dir=rd_onset_dir)
 
         # Create a dataframe with compound information
-        self.cmpd_df = self.create_compound_df(runs_per_conc,
-                                               num_consec_frames,
-                                               P_threshold)
+        self.cmpd_df = self.create_compound_df(num_consec_frames,
+                                               P_threshold,
+                                               runs_per_conc)
+        # Write dataframe to csv
+        self.cmpd_df.to_csv("compounds.csv")
 
         # Create comparison plots
         # self.concentration_dependence_plots(plot_dir, plot_file_type)
@@ -61,23 +63,25 @@ class ComparisonAnalysis(object):
                        len(self.compounds))
         index = list(range(num_df_rows))
         columns = ['Dose (kGy)', 'RD Onset Frame', 'Compound',
-                   'Concentration (mM)', 'Run Number', 'RD Metric']
+                   'Concentration (mM)', 'Run Number', 'RD Metric',
+                   'Num Consec Frames', 'P threshold']
         df = pd.DataFrame(columns=columns, index=index)
         counter = 0
         for cmpd in self.compounds.itervalues():
             warn_if_frames123_dont_correlate(cmpd, num_runs_per_conc)
-            for conc in Compound.CMPD_CONC:
-                for run_num in xrange(0, num_runs_per_conc):
-                    for n in num_consec_frames:
-                        for P in P_threshold:
+            for n in num_consec_frames:
+                for P in P_threshold:
+                    raddam_onset_cormap = cmpd.get_raddam_onset_nums(n=n, P_thresh=P)
+                    for conc in Compound.CMPD_CONC:
+                        for run_num in xrange(0, num_runs_per_conc):
                             if cmpd.name == "no_protection":
-                                frame_num_cormap = cmpd.raddam_onset_cormap[0][run_num]
+                                frame_num_cormap = raddam_onset_cormap[0][run_num]
                                 dose_value_cormap = cmpd.doses[0][frame_num_cormap-1, run_num]
 
                                 frame_num_bsxcube = cmpd.raddam_onset[0][run_num]
                                 dose_value_bsxcube = cmpd.doses[0][frame_num_bsxcube-1, run_num]
                             else:
-                                frame_num_cormap = cmpd.raddam_onset_cormap[conc][run_num]
+                                frame_num_cormap = raddam_onset_cormap[conc][run_num]
                                 dose_value_cormap = cmpd.doses[conc][frame_num_cormap-1, run_num]
 
                                 frame_num_bsxcube = cmpd.raddam_onset[conc][run_num]
@@ -87,14 +91,18 @@ class ComparisonAnalysis(object):
                                                         columns[2]: cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
                                                         columns[3]: conc,
                                                         columns[4]: run_num + 1,
-                                                        columns[5]: "CorMap"})
+                                                        columns[5]: "CorMap",
+                                                        columns[6]: n,
+                                                        columns[7]: P})
                             counter += 1
                             df.loc[counter] = pd.Series({columns[0]: dose_value_bsxcube,
                                                          columns[1]: frame_num_bsxcube,
                                                          columns[2]: cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
                                                          columns[3]: conc,
                                                          columns[4]: run_num + 1,
-                                                         columns[5]: "BsxCuBE"})
+                                                         columns[5]: "BsxCuBE",
+                                                         columns[6]: n,
+                                                         columns[7]: P})
                             counter += 1
         return df
 
