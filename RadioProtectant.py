@@ -149,7 +149,8 @@ class Compound(object):
             self.scat_analysis = self.get_data_analysis_objs(dose_metric,
                                                              dose_units)
 
-            self.merge_thresholds, self.adjP_123_correlate = self.get_merging_thresholds(num_consec_frames, frame_comp, P_threshold)
+            self.raddam_onset_cormap = self.get_raddam_onset_nums(num_consec_frames, frame_comp, P_threshold)
+            self.adjP_123_correlate = self.check_frames_123_correlation()
 
         else:
             print '************************* ERROR **************************'
@@ -414,18 +415,33 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     scatter_objs[conc] = run_objs
         return scatter_objs
 
-    def get_merging_thresholds(self, n=3, k=1, P_thresh=0.01):
+    def get_raddam_onset_nums(self, n=3, k=1, P_thresh=0.01):
         """Get the images corresponding to the first n consecutive frames that
         are different from the given frame. These are going to be referred to
-        as the merging thresholds. Store the corresponding image for each run
+        as the raddam onset values. Store the corresponding image for each run
         in a dictionary. The key will correspond to the concentration of the
         radioprotectant compound and the value will be a list containing the
-        corresponding frames numbers of the merging threshold for each run.
+        corresponding frames numbers of the radiation damage onset for each
+        run.
         """
-        merging_thresholds = {}
-        adjP_123_correlate = {}
+        raddam_onset = {}
         for conc, conc_analysis in self.scat_analysis.iteritems():
             frames = list(range(3))
+            for j, run in enumerate(conc_analysis):
+                # Find frame at which we believe extensive damage has occured.
+                frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
+            if self.name == "no_protection":
+                raddam_onset[0] = frames
+            else:
+                raddam_onset[conc] = frames
+        return raddam_onset
+
+    def check_frames_123_correlation(self):
+        """Check whether frames 1, 2 and 3 correlate perfectly according to the
+        adj P(>C) metric from the CorMap analysis
+        """
+        adjP_123_correlate = {}
+        for conc, conc_analysis in self.scat_analysis.iteritems():
             for j, run in enumerate(conc_analysis):
                 # Check that first three frames correlated with each other.
                 adjP_1_2 = run.get_pw_data(1, 2, "adj P(>C)")
@@ -435,15 +451,11 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
                     correlation = False
                 else:
                     correlation = True
-                # Find frame at which we believe extensive damage has occured.
-                frames[j] = run.find_first_n_diff_frames(n, k, P_thresh)
             if self.name == "no_protection":
-                merging_thresholds[0] = frames
                 adjP_123_correlate[0] = correlation
             else:
-                merging_thresholds[conc] = frames
                 adjP_123_correlate[conc] = correlation
-        return merging_thresholds, adjP_123_correlate
+        return adjP_123_correlate
 
     def get_doses(self, use_frame_nums=False, dose_met="DWD"):
         """Parse the BsxCuBE log file to get the diode readings and then

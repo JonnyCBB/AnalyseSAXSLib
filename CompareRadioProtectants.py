@@ -68,13 +68,13 @@ class ComparisonAnalysis(object):
             for conc in Compound.CMPD_CONC:
                 for run_num in xrange(0, num_runs_per_conc):
                     if cmpd_data.name == "no_protection":
-                        frame_num_cormap = cmpd_data.merge_thresholds[0][run_num]
+                        frame_num_cormap = cmpd_data.raddam_onset_cormap[0][run_num]
                         dose_value_cormap = cmpd_data.doses[0][frame_num_cormap-1, run_num]
 
                         frame_num_bsxcube = cmpd_data.raddam_onset[0][run_num]
                         dose_value_bsxcube = cmpd_data.doses[0][frame_num_bsxcube-1, run_num]
                     else:
-                        frame_num_cormap = cmpd_data.merge_thresholds[conc][run_num]
+                        frame_num_cormap = cmpd_data.raddam_onset_cormap[conc][run_num]
                         dose_value_cormap = cmpd_data.doses[conc][frame_num_cormap-1, run_num]
 
                         frame_num_bsxcube = cmpd_data.raddam_onset[conc][run_num]
