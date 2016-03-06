@@ -438,15 +438,16 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         """
         adjP_123_correlate = {}
         for conc, conc_analysis in self.scat_analysis.iteritems():
+            correlation = []
             for j, run in enumerate(conc_analysis):
                 # Check that first three frames correlated with each other.
                 adjP_1_2 = run.get_pw_data(1, 2, "adj P(>C)")
                 adjP_1_3 = run.get_pw_data(1, 3, "adj P(>C)")
                 adjP_2_3 = run.get_pw_data(2, 3, "adj P(>C)")
                 if adjP_1_2 != 1.0 or adjP_1_3 != 1.0 or adjP_2_3 != 1.0:
-                    correlation = False
+                    correlation.append(False)
                 else:
-                    correlation = True
+                    correlation.append(True)
             if self.name == "no_protection":
                 adjP_123_correlate[0] = correlation
             else:
