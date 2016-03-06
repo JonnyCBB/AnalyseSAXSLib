@@ -185,8 +185,8 @@ def warn_if_frames123_dont_correlate(cmpd, num_runs_per_conc=3):
                 print '******************** WARNING *********************'
                 print 'FIRST THREE FRAMES DO NOT CORRELATE'
                 print """Check frames for compound: {}, concentration: {},
-            and run number: {}""".format(cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
-                                         conc, j + 1)
+and run number: {}""".format(cmpd.CMPD_INFO[cmpd.name][cmpd.LIST_INDEX["preferred_name"]],
+                             conc, run + 1)
 
 
 def make_data_dirs(top_level_dir, second_level_dir=""):
