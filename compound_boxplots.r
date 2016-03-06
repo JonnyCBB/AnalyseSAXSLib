@@ -1,4 +1,4 @@
-library(ggplot2)
+library(ggplot2)  #Import plotting library ggplot2
 df <- read.csv("compounds.csv")  # Read dataframe
 
 #Change column names
