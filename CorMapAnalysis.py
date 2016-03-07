@@ -440,7 +440,6 @@ class ScatterAnalysis(object):
                        2: [colours[2], "P(>C) < {}".format(P_threshold)]}
             P_col = 2
 
-
         plt.figure(self.PLOT_NUM)
         good_points = pwframe_data[pwframe_data[:, P_col] == 1]
         plt.scatter(good_points[:, 0], good_points[:, 1], color=lb_dict[0][0],
@@ -496,15 +495,17 @@ class ScatterAnalysis(object):
             print "would like to save the plot."
         if display:
             plt.show()
-
+        if not display and not save:
             return (good_points,ok_points,bad_points)
 
-    # NOT FINISHED YET - DO NOT RUN (!!), IT WILL PRINT OUT 120 SCATTER PLOTS!!!!
+    # ----------------------------------------------------------------------- #
+    #                           P(>C) HEAT MAP                                #
+    # ----------------------------------------------------------------------- #
     def plot_heatmap(self,num_frames=120,P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
                      legend_loc=2, x_change=False, use_adjP=True,
                      xaxis_frame_num=False):
-        """Heatmap plot of the C values for all frames against all other
+        """Heatmap plot of the P(>C) values for all frames against all other
         frames.
         """
         full_data = []
@@ -515,12 +516,12 @@ class ScatterAnalysis(object):
                                                               xaxis_frame_num=xaxis_frame_num)
             xOrder = list(good_points[:, 0]) + list(ok_points[:, 0]) + list(bad_points[:, 0])
             xData = [-1]*len(good_points[:, 0]) + [0]*len(ok_points[:, 0]) + [1]*len(bad_points[:, 0])
-            l, xData_sorted = (list(t) for t in zip(*sorted(zip(xOrder, xData))))
+            xOrder_sorted, xData_sorted = (list(t) for t in zip(*sorted(zip(xOrder, xData))))
             full_data.append(xData_sorted)
         full_DataFrame = pandas.DataFrame(data=full_data,
-                                          columns=range(1,num_frames+1),
+                                          columns=xOrder_sorted,
                                           index=range(1,num_frames+1))
-        plt.figure()
+        heatmap = plt.figure()
         ax = plt.subplot(111)
 
         colours = ["#0072B2", "#009E73", "#D55E00"]
@@ -531,10 +532,12 @@ class ScatterAnalysis(object):
             good_label = "adj P(>C) == 1"
             ok_label = "1 >= adj P(>C) >= {}".format(P_threshold)
             bad_label = "adj P(>C) < {}".format(P_threshold)
+            plot_title = "adj P(>C) values"
         else:
             good_label = "P(>C) == 1"
             ok_label = "1 >= P(>C) >= {}".format(P_threshold)
             bad_label = "P(>C) < {}".format(P_threshold)
+            plot_title = "P(>C) values"
         good_patch = mpl.patches.Patch(color=colours[0], label=good_label)
         ok_patch = mpl.patches.Patch(color=colours[1], label=ok_label)
         bad_patch = mpl.patches.Patch(color=colours[2], label=bad_label)
@@ -542,32 +545,45 @@ class ScatterAnalysis(object):
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.legend(handles=[good_patch,ok_patch,bad_patch],bbox_to_anchor=(1, 1),loc=legend_loc)
 
-        if x_change:
-            if self.x_units:
-                plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
-                           fontdict=self.PLOT_LABEL)
-            else:
-                plt.xlabel(r'$\Delta${}'.format(self.x_metric),
-                           fontdict=self.PLOT_LABEL)
-        else:
-            if self.x_units:
-                plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
-                           fontdict=self.PLOT_LABEL)
-            else:
-                plt.xlabel("{}".format(self.x_metric),
-                           fontdict=self.PLOT_LABEL)
-            if self.x_units:
-                plt.ylabel("{} ({})".format(self.x_metric, self.x_units),
-                           fontdict=self.PLOT_LABEL)
-            else:
-                plt.ylabel("{}".format(self.x_metric),
-                           fontdict=self.PLOT_LABEL)
         if xaxis_frame_num:
-            plt.title("C values against frame number for frame {}".format(frame))
+            plt.title("P(>C) values against frame number")
+
+            plt.xlabel('Other frames',
+                       fontdict=self.PLOT_LABEL)
         else:
-            plt.title("C values against {} for frame {}".format(self.x_metric,
-                                                                frame))
-        plt.show()
+            if x_change:
+                if self.x_units:
+                    plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
+                               fontdict=self.PLOT_LABEL)
+                else: 
+                    plt.xlabel(r'$\Delta${}'.format(self.x_metric),
+                               fontdict=self.PLOT_LABEL)   
+            else:
+                if self.x_units:
+                    plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
+                               fontdict=self.PLOT_LABEL)
+                else:
+                    plt.xlabel("{}".format(self.x_metric),
+                               fontdict=self.PLOT_LABEL)  
+        plt.ylabel('Chosen frame',fontdict=self.PLOT_LABEL)
+        plt.title(plot_title)
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        #                       SAVE AND/OR DISPLAY                       #
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        if save and filename:
+            if directory:
+                plot_path = "{}/{}".format(directory, filename)
+            else:
+                plot_path = filename
+            plt.savefig(plot_path)
+        elif save and not filename:
+            print "********************** ERROR ***************************"
+            print "COULD NOT SAVE PLOT"
+            print "No filename specified. Please specify a filename if you"
+            print "would like to save the plot."
+        if display:
+            heatmap.show()
 
     # ----------------------------------------------------------------------- #
     #                        PLOT 1D INTENSITY CURVE                          #
