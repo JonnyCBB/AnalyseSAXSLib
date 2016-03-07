@@ -504,7 +504,7 @@ class ScatterAnalysis(object):
     def plot_heatmap(self,P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
                      legend_loc=2, x_change=False, use_adjP=True,
-                     xaxis_frame_num=False):
+                     xaxis_frame_num=False,P_values=True):
         """Heatmap plot of the P(>C) values for all frames against all other
         frames.
         """
@@ -516,39 +516,50 @@ class ScatterAnalysis(object):
                                                               x_change=x_change, use_adjP=use_adjP,
                                                               xaxis_frame_num=xaxis_frame_num)
             xOrder = list(good_points[:, 0]) + list(ok_points[:, 0]) + list(bad_points[:, 0])
+            C_values = list(good_points[:, 1]) + list(ok_points[:, 1]) + list(bad_points[:, 1])
             xData = [-1]*len(good_points[:, 0]) + [0]*len(ok_points[:, 0]) + [1]*len(bad_points[:, 0])
-            xOrder_sorted, xData_sorted = (list(t) for t in zip(*sorted(zip(xOrder, xData))))
-            full_data.append(xData_sorted)
+
+            if P_values:
+                xOrder_sorted, xData_sorted = (list(t) for t in zip(*sorted(zip(xOrder, xData))))
+                full_data.append(xData_sorted)
+
+            else:
+                xOrder_sorted, C_values_sorted = (list(t) for t in zip(*sorted(zip(xOrder, C_values))))
+                full_data.append(C_values_sorted)
+
         full_DataFrame = pandas.DataFrame(data=full_data,
                                           columns=xOrder_sorted,
                                           index=range(1,num_frames+1))
         heatmap = plt.figure()
         ax = plt.subplot(111)
 
-        colours = ["#0072B2", "#009E73", "#D55E00"]
-        sns.heatmap(full_DataFrame, cmap=mpl.colors.ListedColormap(colours),cbar=False)
+        if P_values:
+            colours = ["#0072B2", "#009E73", "#D55E00"]
+            sns.heatmap(full_DataFrame, cmap=mpl.colors.ListedColormap(colours),cbar=False)
 
-        # create legend information
-        if use_adjP:
-            good_label = "adj P(>C) == 1"
-            ok_label = "1 >= adj P(>C) >= {}".format(P_threshold)
-            bad_label = "adj P(>C) < {}".format(P_threshold)
-            plot_title = "adj P(>C) values"
+            # create legend information
+            if use_adjP:
+                good_label = "adj P(>C) == 1"
+                ok_label = "1 >= adj P(>C) >= {}".format(P_threshold)
+                bad_label = "adj P(>C) < {}".format(P_threshold)
+                plot_title = "adj P(>C) values for varying frame number"
+            else:
+                good_label = "P(>C) == 1"
+                ok_label = "1 >= P(>C) >= {}".format(P_threshold)
+                bad_label = "P(>C) < {}".format(P_threshold)
+                plot_title = "P(>C) values for varying frame number"
+            good_patch = mpl.patches.Patch(color=colours[0], label=good_label)
+            ok_patch = mpl.patches.Patch(color=colours[1], label=ok_label)
+            bad_patch = mpl.patches.Patch(color=colours[2], label=bad_label)
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+            ax.legend(handles=[good_patch,ok_patch,bad_patch],bbox_to_anchor=(1, 1),loc=legend_loc)
+
         else:
-            good_label = "P(>C) == 1"
-            ok_label = "1 >= P(>C) >= {}".format(P_threshold)
-            bad_label = "P(>C) < {}".format(P_threshold)
-            plot_title = "P(>C) values"
-        good_patch = mpl.patches.Patch(color=colours[0], label=good_label)
-        ok_patch = mpl.patches.Patch(color=colours[1], label=ok_label)
-        bad_patch = mpl.patches.Patch(color=colours[2], label=bad_label)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        ax.legend(handles=[good_patch,ok_patch,bad_patch],bbox_to_anchor=(1, 1),loc=legend_loc)
+            sns.heatmap(full_DataFrame,cmap="YlGnBu",cbar=True)
+            plot_title = "C values for varying frame number"
 
         if xaxis_frame_num:
-            plt.title("P(>C) values against frame number")
-
             plt.xlabel('Other frames',
                        fontdict=self.PLOT_LABEL)
         else:
