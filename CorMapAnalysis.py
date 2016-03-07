@@ -501,7 +501,7 @@ class ScatterAnalysis(object):
     # ----------------------------------------------------------------------- #
     #                           P(>C) HEAT MAP                                #
     # ----------------------------------------------------------------------- #
-    def plot_heatmap(self,num_frames=120,P_threshold=0.01, markersize=60,
+    def plot_heatmap(self,P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
                      legend_loc=2, x_change=False, use_adjP=True,
                      xaxis_frame_num=False):
@@ -509,6 +509,7 @@ class ScatterAnalysis(object):
         frames.
         """
         full_data = []
+        num_frames = self.I.shape[1]
         for frame in range(1,num_frames+1):
             (good_points,ok_points,bad_points) = plot_scatter(frame=frame, P_threshold=P_threshold,
                                                               display=False, save=False,
