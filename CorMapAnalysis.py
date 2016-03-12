@@ -513,10 +513,30 @@ class ScatterAnalysis(object):
         full_data = []
         num_frames = self.I.shape[1]
         for frame in range(1, num_frames+1):
-            (good_points, ok_points, bad_points) = self.plot_scatter(frame=frame, P_threshold=P_threshold,
-                                                                     display=False, save=False,
-                                                                     x_change=x_change, use_adjP=use_adjP,
-                                                                     xaxis_frame_num=xaxis_frame_num)
+            pwframe_data = self.get_pw_data_array(frame=frame,
+                                                  delete_zero_row=False)
+
+            if xaxis_frame_num:
+                x_axis = np.linspace(1, self.I.shape[1], self.I.shape[1])
+            else:
+                x_axis = self.x_axis
+
+            if x_change:
+                sub = x_axis[frame - 1]
+                pwframe_data = np.column_stack([abs(x_axis - sub), pwframe_data])
+            else:
+                pwframe_data = np.column_stack([x_axis, pwframe_data])
+            pwframe_data = np.delete(pwframe_data, (frame-1), axis=0)
+            if use_adjP:
+                P_col = 3
+            else:
+                P_col = 2
+
+            good_points = pwframe_data[pwframe_data[:, P_col] == 1]
+            ok_points = pwframe_data[1 > pwframe_data[:, P_col]]
+            ok_points = ok_points[ok_points[:, P_col] >= P_threshold]
+            bad_points = pwframe_data[pwframe_data[:, P_col] < P_threshold]
+
             xOrder = list(good_points[:, 0]) + list(ok_points[:, 0]) + list(bad_points[:, 0])
             C_values = list(good_points[:, 1]) + list(ok_points[:, 1]) + list(bad_points[:, 1])
             xData = [-1]*len(good_points[:, 0]) + [0]*len(ok_points[:, 0]) + [1]*len(bad_points[:, 0])
