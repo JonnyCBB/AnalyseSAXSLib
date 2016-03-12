@@ -497,8 +497,6 @@ class ScatterAnalysis(object):
             print "would like to save the plot."
         if display:
             plt.show()
-        if not display and not save:
-            return (good_points, ok_points, bad_points)
 
     # ----------------------------------------------------------------------- #
     #                           P(>C) HEAT MAP                                #
