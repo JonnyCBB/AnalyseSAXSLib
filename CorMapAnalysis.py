@@ -601,6 +601,8 @@ class ScatterAnalysis(object):
                                fontdict=self.PLOT_LABEL)
         plt.ylabel('Chosen frame', fontdict=self.PLOT_LABEL)
         plt.title(plot_title)
+        ytick_labels = np.linspace(1, num_frames, 10).astype(int)
+        plt.yticks(ytick_labels[::-1], ytick_labels)
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
