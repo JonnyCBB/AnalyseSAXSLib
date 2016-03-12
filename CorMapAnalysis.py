@@ -7,6 +7,8 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import pandas as pd
+import seaborn as sns
 
 
 class ScatterAnalysis(object):
@@ -496,25 +498,25 @@ class ScatterAnalysis(object):
         if display:
             plt.show()
         if not display and not save:
-            return (good_points,ok_points,bad_points)
+            return (good_points, ok_points, bad_points)
 
     # ----------------------------------------------------------------------- #
     #                           P(>C) HEAT MAP                                #
     # ----------------------------------------------------------------------- #
-    def plot_heatmap(self,P_threshold=0.01, markersize=60,
+    def plot_heatmap(self, P_threshold=0.01, markersize=60,
                      display=True, save=False, filename="", directory="",
                      legend_loc=2, x_change=False, use_adjP=True,
-                     xaxis_frame_num=False,P_values=True):
+                     xaxis_frame_num=False, P_values=True):
         """Heatmap plot of the P(>C) values for all frames against all other
         frames.
         """
         full_data = []
         num_frames = self.I.shape[1]
-        for frame in range(1,num_frames+1):
-            (good_points,ok_points,bad_points) = plot_scatter(frame=frame, P_threshold=P_threshold,
-                                                              display=False, save=False,
-                                                              x_change=x_change, use_adjP=use_adjP,
-                                                              xaxis_frame_num=xaxis_frame_num)
+        for frame in range(1, num_frames+1):
+            (good_points, ok_points, bad_points) = self.plot_scatter(frame=frame, P_threshold=P_threshold,
+                                                                     display=False, save=False,
+                                                                     x_change=x_change, use_adjP=use_adjP,
+                                                                     xaxis_frame_num=xaxis_frame_num)
             xOrder = list(good_points[:, 0]) + list(ok_points[:, 0]) + list(bad_points[:, 0])
             C_values = list(good_points[:, 1]) + list(ok_points[:, 1]) + list(bad_points[:, 1])
             xData = [-1]*len(good_points[:, 0]) + [0]*len(ok_points[:, 0]) + [1]*len(bad_points[:, 0])
@@ -527,15 +529,15 @@ class ScatterAnalysis(object):
                 xOrder_sorted, C_values_sorted = (list(t) for t in zip(*sorted(zip(xOrder, C_values))))
                 full_data.append(C_values_sorted)
 
-        full_DataFrame = pandas.DataFrame(data=full_data,
-                                          columns=xOrder_sorted,
-                                          index=range(1,num_frames+1))
+        full_DataFrame = pd.DataFrame(data=full_data,
+                                      columns=xOrder_sorted,
+                                      index=range(1, num_frames+1))
         heatmap = plt.figure()
         ax = plt.subplot(111)
 
         if P_values:
             colours = ["#0072B2", "#009E73", "#D55E00"]
-            sns.heatmap(full_DataFrame, cmap=mpl.colors.ListedColormap(colours),cbar=False)
+            sns.heatmap(full_DataFrame, cmap=mpl.colors.ListedColormap(colours), cbar=False)
 
             # create legend information
             if use_adjP:
@@ -553,10 +555,10 @@ class ScatterAnalysis(object):
             bad_patch = mpl.patches.Patch(color=colours[2], label=bad_label)
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-            ax.legend(handles=[good_patch,ok_patch,bad_patch],bbox_to_anchor=(1, 1),loc=legend_loc)
+            ax.legend(handles=[good_patch, ok_patch, bad_patch], bbox_to_anchor=(1, 1), loc=legend_loc)
 
         else:
-            sns.heatmap(full_DataFrame,cmap="YlGnBu",cbar=True)
+            sns.heatmap(full_DataFrame, cmap="YlGnBu", cbar=True)
             plot_title = "C values for varying frame number"
 
         if xaxis_frame_num:
@@ -567,17 +569,17 @@ class ScatterAnalysis(object):
                 if self.x_units:
                     plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
                                fontdict=self.PLOT_LABEL)
-                else: 
+                else:
                     plt.xlabel(r'$\Delta${}'.format(self.x_metric),
-                               fontdict=self.PLOT_LABEL)   
+                               fontdict=self.PLOT_LABEL)
             else:
                 if self.x_units:
                     plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
                                fontdict=self.PLOT_LABEL)
                 else:
                     plt.xlabel("{}".format(self.x_metric),
-                               fontdict=self.PLOT_LABEL)  
-        plt.ylabel('Chosen frame',fontdict=self.PLOT_LABEL)
+                               fontdict=self.PLOT_LABEL)
+        plt.ylabel('Chosen frame', fontdict=self.PLOT_LABEL)
         plt.title(plot_title)
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
