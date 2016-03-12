@@ -580,27 +580,28 @@ class ScatterAnalysis(object):
             plot_title = "C values for varying frame number"
 
         if xaxis_frame_num:
-            plt.xlabel('Other frames',
-                       fontdict=self.PLOT_LABEL)
+            plt.xlabel('Frame Number', fontdict=self.PLOT_LABEL)
         else:
-            if x_change:
-                if self.x_units:
-                    plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
-                               fontdict=self.PLOT_LABEL)
-                else:
-                    plt.xlabel(r'$\Delta${}'.format(self.x_metric),
-                               fontdict=self.PLOT_LABEL)
-            else:
-                if self.x_units:
-                    plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
-                               fontdict=self.PLOT_LABEL)
-                else:
-                    plt.xlabel("{}".format(self.x_metric),
-                               fontdict=self.PLOT_LABEL)
-        plt.ylabel('Chosen frame', fontdict=self.PLOT_LABEL)
+            plt.xlabel('Frame Number', fontdict=self.PLOT_LABEL)
+            # if x_change:
+            #     if self.x_units:
+            #         plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
+            #                    fontdict=self.PLOT_LABEL)
+            #     else:
+            #         plt.xlabel(r'$\Delta${}'.format(self.x_metric),
+            #                    fontdict=self.PLOT_LABEL)
+            # else:
+            #     if self.x_units:
+            #         plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
+            #                    fontdict=self.PLOT_LABEL)
+            #     else:
+            #         plt.xlabel("{}".format(self.x_metric),
+            #                    fontdict=self.PLOT_LABEL)
+        plt.ylabel('Frame Number', fontdict=self.PLOT_LABEL)
         plt.title(plot_title)
-        ytick_labels = np.linspace(1, num_frames, 10).astype(int)
-        plt.yticks(ytick_labels[::-1], ytick_labels)
+        tick_labels = np.linspace(1, num_frames, 10).astype(int)
+        plt.yticks(tick_labels[::-1], tick_labels)
+        plt.xticks(tick_labels, tick_labels, rotation='horizontal')
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         #                       SAVE AND/OR DISPLAY                       #
