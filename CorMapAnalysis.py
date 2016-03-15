@@ -461,14 +461,19 @@ class ScatterAnalysis(object):
 
         plt.legend(loc=legend_loc, scatterpoints=1)
         if x_change:
-            if self.x_units:
+            if xaxis_frame_num:
+                plt.xlabel(r'$\Delta${}'.format("Frame Number"),
+                           fontdict=self.PLOT_LABEL)
+            elif self.x_units:
                 plt.xlabel(r'$\Delta${} ({})'.format(self.x_metric, self.x_units),
                            fontdict=self.PLOT_LABEL)
             else:
                 plt.xlabel(r'$\Delta${}'.format(self.x_metric),
                            fontdict=self.PLOT_LABEL)
         else:
-            if self.x_units:
+            if xaxis_frame_num:
+                plt.xlabel("Frame Number", fontdict=self.PLOT_LABEL)
+            elif self.x_units:
                 plt.xlabel("{} ({})".format(self.x_metric, self.x_units),
                            fontdict=self.PLOT_LABEL)
             else:
