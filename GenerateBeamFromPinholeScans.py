@@ -7,6 +7,7 @@ from scipy import interpolate
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from mayavi import mlab
+from BeamModule import scaleArray, writePGMFile
 
 # Columns corresponding to the spatial coordinate and the diodebs reading from
 # the data recorded after the scan.
@@ -44,6 +45,7 @@ horz_grid = spl1(pin2, pin1)  # Knows between 1.7 and 2.3
 # Create spline grid for vertical scans
 vert_grid = spl2(pin1, pin2)  # Knows between -0.8 and 0.2
 
+# Create weight arrays used for averaging each interpolated beam array
 X, Y = np.meshgrid(pin1, pin2)
 strong_wt = 0.5  # This value should be 0.5 <= x <= 1.0
 horz_grid_wts = 0.5 * np.ones(X.shape)
@@ -60,8 +62,21 @@ for i in xrange(0, X.shape[0]):
             horz_grid_wts[i, j] = strong_wt
             vert_grid_wts[i, j] = 1.0 - horz_grid_wts[i, j]
 
+# Perform weighted averages of the beam arrays
 beam_array = np.multiply(horz_grid.transpose(), horz_grid_wts) + \
              np.multiply(vert_grid, vert_grid_wts)
+
+# Scale array for conversion to pgm format
+scaled_beam = scaleArray(beam_array)
+
+# Write PGM file
+writePGMFile(scaled_beam, "SAXS_beam.pgm")
+
+pixelSizeX = (pin1[-1] - pin1[0])/len(pin1)
+pixelSizeY = (pin2[-1] - pin2[0])/len(pin2)
+
+print "Pixel Size X = {:.3f} microns".format(pixelSizeX * 1000)
+print "Pixel Size Y = {:.3f} microns".format(pixelSizeY * 1000)
 
 # fig = plt.figure()
 # ax = fig.gca(projection='3d')
