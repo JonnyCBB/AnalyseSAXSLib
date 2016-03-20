@@ -4,9 +4,12 @@ the SAXS analysis experiments
 from RadioProtectant import Compound
 import pandas as pd
 import seaborn as sns
+import numpy as np
 import os
 import matplotlib.pyplot as plt
+import matplotlib
 
+matplotlib.style.use('ggplot')
 
 class ComparisonAnalysis(object):
     """Analysis of several compounds for SAXS analysis.
@@ -44,6 +47,8 @@ class ComparisonAnalysis(object):
                                                runs_per_conc)
         # Write dataframe to csv
         self.cmpd_df.to_csv("compounds.csv")
+        self.plot_RD_onset_ratios(plot_dir=plot_dir, rp_comp_dir=rp_comp_dir,
+                                  plot_file_type=plot_file_type)
 
         # Create comparison plots
         # self.concentration_dependence_plots(plot_dir, plot_file_type)
@@ -105,6 +110,52 @@ class ComparisonAnalysis(object):
                                                          columns[7]: P})
                             counter += 1
         return df
+
+    def plot_RD_onset_ratios(self, P_thresh=0.01, num_consec_frames=3,
+                             plot_dir="Plots", rp_comp_dir="RP_Comparisons",
+                             plot_file_type="pdf"):
+        np_df = self.cmpd_df.loc[(self.cmpd_df['Compound'] == "No Protection") &
+                                 (self.cmpd_df['RD Metric'] == "CorMap") &
+                                 (self.cmpd_df['Num Consec Frames'] == num_consec_frames) &
+                                 (self.cmpd_df['P threshold'] == P_thresh)]
+        np_median = np_df["Dose (kGy)"].median()
+
+        cmpd_ratios = {}
+        for cmpd_data in self.compounds.itervalues():
+            cmpd_name = cmpd_data.CMPD_INFO[cmpd_data.name][cmpd_data.LIST_INDEX["preferred_name"]]
+            compound_df = self.cmpd_df.loc[(self.cmpd_df['Compound'] == cmpd_name) &
+                                           (self.cmpd_df['RD Metric'] == "CorMap") &
+                                           (self.cmpd_df['Num Consec Frames'] == num_consec_frames) &
+                                           (self.cmpd_df['P threshold'] == P_thresh)]
+            ratio_vals = np.zeros(len(cmpd_data.CMPD_CONC))
+            for j, conc in enumerate(cmpd_data.CMPD_CONC):
+                cmpd_median = compound_df[compound_df["Concentration (mM)"] == conc]["Dose (kGy)"].median()
+                ratio_vals[j] = cmpd_median/np_median
+            cmpd_ratios[cmpd_name] = ratio_vals
+        columns = ['RD Onset Ratio', 'Compound', 'Concentration (mM)']
+        index = list(range(len(cmpd_data.CMPD_CONC) * (len(cmpd_ratios) - 1)))
+        df = pd.DataFrame(columns=columns, index=index)
+        counter = 0
+        for cmpd_name, ratio_vals in cmpd_ratios.iteritems():
+            if cmpd_name not in "No Protection":
+                for i, ratio in enumerate(ratio_vals):
+                    df.loc[counter] = pd.Series({columns[0]: ratio,
+                                                 columns[1]: cmpd_name,
+                                                 columns[2]: Compound.CMPD_CONC[i]})
+                    counter += 1
+        fig, ax = plt.subplots(1, 1)
+        ax = fig.gca()
+        df.groupby("Compound").plot(x="Concentration (mM)", y="RD Onset Ratio",
+                                    ax=ax, style=['-o'])
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+        plt.legend([v[0] for v in df.groupby("Compound")["Compound"]],
+                   loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.ylabel("RD Onset Ratio")
+        ax.invert_xaxis()
+        plot_path = "../{}/{}/RatioPlots.{}".format(plot_dir, rp_comp_dir,
+                                                    plot_file_type)
+        plt.savefig(plot_path)
 
     def concentration_dependence_plots(self, plot_dir, file_type):
         """Create box plots showing the dependence of compound efficacy with
