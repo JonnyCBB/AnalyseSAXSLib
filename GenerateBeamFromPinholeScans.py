@@ -27,6 +27,15 @@ z1 = np.vstack((diodebs_17end, diodebs_19, diodebs_20, diodebs_21,
                 diodebs_23end))
 spl1 = interpolate.RectBivariateSpline(x1, pin1, z1, kx=3, ky=3, s=0)
 
+# x1_full = np.zeros(len(diodebs_20) * len(x1))
+# y1_full = np.zeros(len(diodebs_20) * len(x1))
+# z1_full = np.zeros(len(diodebs_20) * len(x1))
+# for i in xrange(0, len(x1)):
+#     x1_full[i*len(diodebs_20):(i+1) * len(diodebs_20)] = x1[i] * np.ones(len(diodebs_20))
+#     y1_full[i*len(diodebs_20):(i+1) * len(diodebs_20)] = pin1
+#     z1_full[i*len(diodebs_20):(i+1) * len(diodebs_20)] = z1[i, :]
+
+
 data2 = np.genfromtxt("../pinhole_scan_41.txt")
 pin2 = data2[:, spatial_col]
 diodebs_05 = data2[:, diodebs_col]
@@ -38,6 +47,28 @@ x2 = np.array([-0.8, -0.6, -0.5, -0.4, -0.2])
 z2 = np.vstack((diodebs_08end, diodebs_06, diodebs_05, diodebs_04,
                 diodebs_02end))
 spl2 = interpolate.RectBivariateSpline(x2, pin2, z2, kx=2, ky=2, s=0)
+
+# x2_full = np.zeros(len(diodebs_06) * len(x2))
+# y2_full = np.zeros(len(diodebs_06) * len(x2))
+# z2_full = np.zeros(len(diodebs_06) * len(x2))
+# for i in xrange(0, len(x2)):
+#     x2_full[i*len(diodebs_06):(i+1) * len(diodebs_06)] = pin2
+#     y2_full[i*len(diodebs_06):(i+1) * len(diodebs_06)] = x2[i] * np.ones(len(diodebs_06))
+#     z2_full[i*len(diodebs_06):(i+1) * len(diodebs_06)] = z2[i, :]
+
+# x = np.hstack((x1_full, x2_full))
+# y = np.hstack((y1_full, y2_full))
+# z = np.hstack((z1_full, z2_full))
+# spl = interpolate.interp2d(x, y, z, kind='linear')
+# X = np.linspace(0, spl(x, y).shape[0], 1000)
+# Y = np.linspace(0, spl(x, y).shape[1], 1000)
+# X1, Y1 = np.meshgrid(X, Y)
+#
+# hf = plt.figure()
+# ha = hf.add_subplot(111, projection='3d')
+# ha.plot_surface(X1, Y1, spl(X, Y))
+# plt.show()
+
 
 # Create spline grid for horizontal scans
 horz_grid = spl1(pin2, pin1)  # Knows between 1.7 and 2.3
