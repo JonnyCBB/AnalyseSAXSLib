@@ -45,10 +45,10 @@ class Raddose3d(object):
     CON_DENS = 2.648
 
     # BEAM
-    BEAM_TYPE = "Gaussian"
-    FWHM = "500 500"
-    ENERGY = 12.1
-    COLLIMATION = "700 700"
+    BEAM_TYPE = "ExperimentalPGM"
+    BEAM_FILE = "SAXS_beam.pgm"
+    ENERGY = 12.5
+    PIXELSIZE = "9.836 9.836"
 
     # WEDGE
     WEDGE = "0 0"
@@ -147,12 +147,12 @@ ContainerDensity {}
 Beam
 Type {}
 Flux {}
-FWHM {}
+File {}
 Energy {}
-Collimation Rectangular {}
+PixelSize {}
 
-""".format(block_num, self.BEAM_TYPE, flux, self.FWHM, self.ENERGY,
-           self.COLLIMATION)
+""".format(block_num, self.BEAM_TYPE, flux, self.BEAM_FILE, self.ENERGY,
+           self.PIXELSIZE)
         return raddose3dinputBEAMBLOCK
 
     def writeWEDGEBLOCK(self, exposure_time, block_num=""):
