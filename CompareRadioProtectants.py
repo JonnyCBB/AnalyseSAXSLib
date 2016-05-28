@@ -156,6 +156,7 @@ class ComparisonAnalysis(object):
         plot_path = "../{}/{}/RatioPlots.{}".format(plot_dir, rp_comp_dir,
                                                     plot_file_type)
         plt.savefig(plot_path)
+        plt.close('all')
 
     def concentration_dependence_plots(self, plot_dir, file_type):
         """Create box plots showing the dependence of compound efficacy with
