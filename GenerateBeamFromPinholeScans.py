@@ -8,6 +8,12 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from mayavi import mlab
 from BeamModule import scaleArray, writePGMFile
+import seaborn as sns
+
+figure_dir = "C:\\Users\\jonathan\\Documents\\UniOfOxford\\DPhilWork\\Thesis\\figures\\beam"
+PLOT_LABEL = {'family': 'serif',
+              'weight': 'normal',
+              'size': 16}
 
 # Columns corresponding to the spatial coordinate and the diodebs reading from
 # the data recorded after the scan.
@@ -115,9 +121,27 @@ print "Pixel Size Y = {:.3f} microns".format(pixelSizeY * 1000)
 #                        cmap=cm.coolwarm, linewidth=0, antialiased=True)
 # plt.show()
 
-# plt.figure()
-# plt.plot(pin2, diodebs_20, '-o')
+plt.figure()
+plt.plot(pin1, diodebs_20, '-o', markeredgecolor='#ffffff',
+         markeredgewidth=0.75)
+plt.xlabel(r'Position ($\mu m$)', fontdict=PLOT_LABEL)
+plt.ylabel('Diode reading (mA)', fontdict=PLOT_LABEL)
+plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 # plt.show()
+plot_path = "{}/{}".format(figure_dir, "SAXS_vertical_aperture_scan.pdf")
+plt.savefig(plot_path)
+plt.close('all')
+
+plt.figure()
+plt.plot(pin2, diodebs_05, '-o', markeredgecolor='#ffffff',
+         markeredgewidth=0.75)
+plt.xlabel(r'Position ($\mu m$)', fontdict=PLOT_LABEL)
+plt.ylabel('Diode reading (mA)', fontdict=PLOT_LABEL)
+# plt.show()
+plot_path = "{}/{}".format(figure_dir, "SAXS_horizontal_aperture_scan.pdf")
+plt.savefig(plot_path)
+plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.close('all')
 
 mlab.surf(X.transpose(), Y.transpose(), 5e4*beam_array.transpose())
 mlab.scalarbar()
