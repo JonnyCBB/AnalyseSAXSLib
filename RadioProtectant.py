@@ -653,6 +653,7 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
             plt.ylabel("Flux (photons/sec)")
         else:
             plt.ylabel("Diode reading (cts/sec)")
+            plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
         plt.title("Concentration = {} mM, Run number= {}".format(concentration,
                                                                  run_number))
 
@@ -661,9 +662,9 @@ Compound concentration: {} mM""".format(self.PROTEIN_SAMPLE,
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         if save and filename:
             if directory:
-                if not os.path.exists("../{}".format(directory)):
-                    os.makedirs("../{}".format(directory))
-                plot_path = "../{}/{}".format(directory, filename)
+                if not os.path.exists("{}".format(directory)):
+                    os.makedirs("{}".format(directory))
+                plot_path = "{}/{}".format(directory, filename)
             else:
                 if not os.path.exists("../{}".format(self.plot_dir)):
                     os.makedirs("../{}".format(self.plot_dir))
