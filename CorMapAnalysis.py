@@ -433,12 +433,12 @@ class ScatterAnalysis(object):
         colours = ["#0072B2", "#009E73", "#D55E00"]
         if use_adjP:
             lb_dict = {0: [colours[0], "adj P(>C) == 1"],
-                       1: [colours[1], "1 >= adj P(>C) >= {}".format(P_threshold)],
+                       1: [colours[1], "{} <= adj P(>C) < 1".format(P_threshold)],
                        2: [colours[2], "adj P(>C) < {}".format(P_threshold)]}
             P_col = 3
         else:
             lb_dict = {0: [colours[0], "P(>C) == 1"],
-                       1: [colours[1], "1 >= P(>C) >= {}".format(P_threshold)],
+                       1: [colours[1], "{} <= P(>C) < 1".format(P_threshold)],
                        2: [colours[2], "P(>C) < {}".format(P_threshold)]}
             P_col = 2
 
@@ -565,12 +565,12 @@ class ScatterAnalysis(object):
             # create legend information
             if use_adjP:
                 good_label = "adj P(>C) == 1"
-                ok_label = "1 >= adj P(>C) >= {}".format(P_threshold)
+                ok_label = "{} <= adj P(>C) < 1".format(P_threshold)
                 bad_label = "adj P(>C) < {}".format(P_threshold)
                 plot_title = "adj P(>C) values for varying frame number"
             else:
                 good_label = "P(>C) == 1"
-                ok_label = "1 >= P(>C) >= {}".format(P_threshold)
+                ok_label = "{} <= P(>C) < 1".format(P_threshold)
                 bad_label = "P(>C) < {}".format(P_threshold)
                 plot_title = "P(>C) values for varying frame number"
             good_patch = mpl.patches.Patch(color=colours[0], label=good_label)
@@ -578,7 +578,7 @@ class ScatterAnalysis(object):
             bad_patch = mpl.patches.Patch(color=colours[2], label=bad_label)
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-            ax.legend(handles=[good_patch, ok_patch, bad_patch], bbox_to_anchor=(1, 1), loc=legend_loc)
+            lgd = ax.legend(handles=[good_patch, ok_patch, bad_patch], bbox_to_anchor=(1, 1), loc=legend_loc)
 
         else:
             sns.heatmap(full_DataFrame, cmap="YlGnBu", cbar=True)
@@ -616,7 +616,8 @@ class ScatterAnalysis(object):
                 plot_path = "{}/{}".format(directory, filename)
             else:
                 plot_path = filename
-            plt.savefig(plot_path)
+            plt.savefig(plot_path, bbox_extra_artists=(lgd,),
+                        bbox_inches='tight')
         elif save and not filename:
             print "********************** ERROR ***************************"
             print "COULD NOT SAVE PLOT"
